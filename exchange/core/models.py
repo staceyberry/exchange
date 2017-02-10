@@ -94,6 +94,7 @@ class CSWRecord(models.Model):
 
     classification = models.CharField(max_length=128, blank=True)
     title = models.CharField(max_length=128, blank=False)
+    comments_enabled = models.BooleanField(default=True, blank=False)
     modified = models.DateField(default=datetime.date.today, blank=False)
     # 'creator' is assumed to be distinct from logged-in User here
     creator = models.CharField(max_length=128, blank=True)
@@ -115,16 +116,33 @@ class CSWRecord(models.Model):
                                 blank=True)
 
 
+class Comment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.TextField()
+    ipAddress = models.GenericIPAddressField()
+    submitDateTime = models.DateTimeField()
+    featureReference = models.TextField()
+    the_geom = models.TextField()
+    approver = models.TextField()
+    title = models.TextField()
+    message = models.TextField()
+    approvedDate = models.DateTimeField()
+    status = models.TextField()
+    map_id = models.IntegerField()
+    image = models.TextField()
+    category = models.TextField()
+
 class CSWRecordForm(forms.ModelForm):
     class Meta:
         model = CSWRecord
-        fields = ('title', 'modified', 'creator', 'record_type', 'alternative', 'abstract',
+        fields = ('title', 'comments_enabled', 'modified', 'creator', 'record_type', 'alternative', 'abstract',
                   'source', 'relation', 'record_format', 'bbox_upper_corner',
                   'bbox_lower_corner', 'contact_information', 'gold',
                   'category')
 
         labels = {
             'title': _('Title'),
+            'comments_enabled': _('Comments Enabled'),
             'modified': _('Date Last Modified'),
             'creator': _('Creator'),
             'record_type': _('Type'),

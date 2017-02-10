@@ -7,7 +7,7 @@ from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 from django.core.serializers import serialize
-from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord
+from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, Comment
 from exchange.tasks import create_new_csw
 from geonode.maps.views import _resolve_map
 import requests
@@ -390,3 +390,21 @@ def unified_elastic_search(request):
     }
 
     return JsonResponse(object_list)
+
+
+def request_comments(request, mapid):
+    if request.method == 'POST':
+        #TODO: POST needs to tell the difference between an admin vs user (user can't modify approved attribute)
+        return
+    else:
+        # TODO: Check if user is admin, if so, return all, otherwise, return only approved
+        records = Comment.objects.filter(map_id=mapid)
+
+        # TODO: Add check to see if it wants csv
+        # format = request.GET.get('format', "")
+        # if format.lower() == 'json':
+        return HttpResponse(serialize('json', records),
+                            content_type="application/json")
+        # else:
+        #     return render_to_response("csw/status.html",
+        #                               context_instance=RequestContext(request))
