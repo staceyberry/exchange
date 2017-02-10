@@ -117,20 +117,44 @@ class CSWRecord(models.Model):
 
 
 class Comment(models.Model):
+    comment_category_choices = (
+        ('Safety', 'Safety'),
+        ('Maintenance', 'Maintenance'),
+        ('TrafficCongestion', 'Traffic Congestion'),
+        ('IntersectionRelated', 'Intersection-Related'),
+        ('TransitRouteStop', 'Transit Route/Stop'),
+        ('OnRoadBikeFacility', 'On-Road Bike Facility'),
+        ('OffRoadPathTrail', 'Off-Road Path Trail'),
+        ('Sidewalk', 'Sidewalk'),
+        ('Other', 'Other')
+    )
+
+    comment_status_choices = (
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Unapproved', 'Unapproved')
+    )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.TextField()
-    ipAddress = models.GenericIPAddressField()
-    submitDateTime = models.DateTimeField()
-    featureReference = models.TextField()
-    the_geom = models.TextField()
-    approver = models.TextField()
-    title = models.TextField()
-    message = models.TextField()
-    approvedDate = models.DateTimeField()
-    status = models.TextField()
-    map_id = models.IntegerField()
-    image = models.TextField()
-    category = models.TextField()
+    username = models.TextField(blank=True)
+    submit_date_time = models.DateTimeField(default=datetime.datetime.now, blank=True)  # use server time
+    feature_reference = models.TextField(blank=True)  # passed as argument
+    feature_geom = models.TextField(blank=True)  # passed as argument
+    approver = models.TextField(blank=True)  # passed from header
+    title = models.TextField()  # passed as argument
+    message = models.TextField()  # passed as argument
+    approved_date = models.DateTimeField(blank=True, null=True)  # use server time
+    # only allowed to be changed by admin, default to 'Unapproved'
+    status = models.TextField(default='Unapproved', choices=comment_status_choices)
+    map_id = models.IntegerField()  # passed as argument in url?
+    image = models.TextField(blank=True)  # not sure how we're handling this yet
+    category = models.TextField(choices=comment_category_choices)  # passed as argument
+
+class CommentUserForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('username', 'feature_reference', 'feature_geom', 'title', 'message',
+                  'map_id', 'image', 'category')
 
 class CSWRecordForm(forms.ModelForm):
     class Meta:

@@ -7,11 +7,12 @@ from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 from django.core.serializers import serialize
-from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, Comment
+from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, Comment, CommentUserForm
 from exchange.tasks import create_new_csw
 from geonode.maps.views import _resolve_map
 import requests
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -395,16 +396,35 @@ def unified_elastic_search(request):
 def request_comments(request, mapid):
     if request.method == 'POST':
         #TODO: POST needs to tell the difference between an admin vs user (user can't modify approved attribute)
-        return
+        # request.POST.user = request.META.REMOTE_USER
+        # request.POST.ipAddress = request.META.REMOTE_ADDR
+        form = CommentUserForm(request.POST)
+        if form.is_valid():
+            new_record = form.save(commit=False)
+            new_record.username = request.user.username
+            new_record.save()
+            return JsonResponse({'success': True})
+        return HttpResponse(form.errors.as_json(), content_type="application/json")
     else:
-        # TODO: Check if user is admin, if so, return all, otherwise, return only approved
+        feature_property_keys = ('username', 'submit_date_time', 'feature_reference', 'feature_geom',
+                                 'approver', 'title', 'message', 'approved_date', 'status', 'map_id',
+                                 'image', 'category')
+        # TODO: Check if user is admin, if so, return all, otherwise, return only approved (And mask the fields)
+        # Right now, this is for an admin user
         records = Comment.objects.filter(map_id=mapid)
 
         # TODO: Add check to see if it wants csv
         # format = request.GET.get('format', "")
         # if format.lower() == 'json':
-        return HttpResponse(serialize('json', records),
-                            content_type="application/json")
-        # else:
-        #     return render_to_response("csw/status.html",
-        #                               context_instance=RequestContext(request))
+        def to_features(orig_records):
+            results = []
+            for item in orig_records:
+                feature = {'id': item.id, 'properties': {}}
+                if item.feature_geom:
+                    feature['geometry'] = item.feature_geom
+                for key in feature_property_keys:
+                    feature['properties'][key] = getattr(item, key)
+                results.append(feature)
+            return results
+
+        return JsonResponse({'type': 'FeatureCollection', 'features': to_features(records)})
