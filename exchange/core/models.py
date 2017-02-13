@@ -135,7 +135,7 @@ class Comment(models.Model):
         ('Unapproved', 'Unapproved')
     )
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     username = models.TextField(blank=True)
     submit_date_time = models.DateTimeField(default=datetime.datetime.now, blank=True)  # use server time
     feature_reference = models.TextField(blank=True)  # passed as argument

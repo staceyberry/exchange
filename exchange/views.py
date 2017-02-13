@@ -13,6 +13,7 @@ from geonode.maps.views import _resolve_map
 import requests
 import logging
 import json
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -405,13 +406,33 @@ def request_comments(request, mapid):
             new_record.save()
             return JsonResponse({'success': True})
         return HttpResponse(form.errors.as_json(), content_type="application/json")
+        #TODO: Add check for PUT
+    elif request.method == 'PUT':
+        #TODO: Add check to make sure record exists
+        record = Comment.objects.filter(id=request.PUT['id'])
+        form = CommentUserForm(request.PUT)
+        if form.is_valid():
+            new_record = form.save(commit=False)
+            new_record.approver = request.user.username
+            new_record.save()
+            return JsonResponse({'success': True})
+        return HttpResponse(form.errors.as_json(), content_type="application/json")
     else:
-        feature_property_keys = ('username', 'submit_date_time', 'feature_reference', 'feature_geom',
-                                 'approver', 'title', 'message', 'approved_date', 'status', 'map_id',
+        feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
+                                 'approver', 'title', 'message', 'approved_date', 'status',
                                  'image', 'category')
         # TODO: Check if user is admin, if so, return all, otherwise, return only approved (And mask the fields)
         # Right now, this is for an admin user
-        records = Comment.objects.filter(map_id=mapid)
+        if 'start_date' in request.GET and 'end_date' in request.GET:
+            iso8601_format = '%Y-%m-%dT%H:%M:%S%Z'
+            records = Comment.objects.filter(map_id=mapid,
+                                             submit_date_time__lt=datetime.datetime.strptime(request.GET['end_date'],
+                                                                                             iso8601_format),
+                                             submit_date_time__gt=datetime.datetime.strptime(request.GET['start_date'],
+                                                                                             iso8601_format))\
+                .order_by('-submit_date_time')
+        else:
+            records = Comment.objects.filter(map_id=mapid).order_by('-submit_date_time')
 
         # TODO: Add check to see if it wants csv
         # format = request.GET.get('format', "")
@@ -419,9 +440,9 @@ def request_comments(request, mapid):
         def to_features(orig_records):
             results = []
             for item in orig_records:
-                feature = {'id': item.id, 'properties': {}}
-                if item.feature_geom:
-                    feature['geometry'] = item.feature_geom
+                feature = {'id': item.id, 'properties': {}, 'type': 'Feature'}
+                if item.feature_geom and item.feature_geom != '':
+                    feature['geometry'] = json.loads(item.feature_geom)['geometry']
                 for key in feature_property_keys:
                     feature['properties'][key] = getattr(item, key)
                 results.append(feature)
