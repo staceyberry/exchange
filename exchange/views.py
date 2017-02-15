@@ -444,7 +444,7 @@ def request_comments(request, mapid):
                 results.append(feature)
             return results
 
-        return JsonResponse({'type': 'FeatureCollection', 'features': to_features(records)})
+        return JsonResponse({'type': 'FeatureCollection', 'staff': True, 'features': to_features(records)})
     # Otherwise, this should just be a GET by a user
     else:
         feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
@@ -462,6 +462,6 @@ def request_comments(request, mapid):
                 results.append(feature)
             return results
 
-        return JsonResponse({'type': 'FeatureCollection', 'features': to_features(records)})
+        return JsonResponse({'type': 'FeatureCollection', 'staff': False, 'features': to_features(records)})
 
 
