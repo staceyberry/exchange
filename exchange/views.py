@@ -396,9 +396,6 @@ def unified_elastic_search(request):
 
 def request_comments(request, mapid):
     if request.method == 'POST':
-        #TODO: POST needs to tell the difference between an admin vs user (user can't modify approved attribute)
-        # request.POST.user = request.META.REMOTE_USER
-        # request.POST.ipAddress = request.META.REMOTE_ADDR
         form = CommentUserForm(request.POST)
         if form.is_valid():
             new_record = form.save(commit=False)
@@ -406,23 +403,22 @@ def request_comments(request, mapid):
             new_record.save()
             return JsonResponse({'success': True})
         return HttpResponse(form.errors.as_json(), content_type="application/json")
-        #TODO: Add check for PUT
     elif request.method == 'PUT':
-        #TODO: Add check to make sure record exists
-        record = Comment.objects.filter(id=request.PUT['id'])
-        form = CommentUserForm(request.PUT)
-        if form.is_valid():
-            new_record = form.save(commit=False)
-            new_record.approver = request.user.username
-            new_record.save()
-            return JsonResponse({'success': True})
-        return HttpResponse(form.errors.as_json(), content_type="application/json")
-    else:
+        if request.user.is_staff:
+            record = Comment.objects.filter(id=request.PUT['id'])
+            form = CommentUserForm(request.PUT)
+            if form.is_valid():
+                new_record = form.save(commit=False)
+                new_record.approver = request.user.username
+                new_record.save()
+                return JsonResponse({'success': True})
+            return HttpResponse(form.errors.as_json(), content_type="application/json")
+        return HttpResponse('Unauthorized', status=401)
+    elif request.user.is_staff:
         feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
                                  'approver', 'title', 'message', 'approved_date', 'status',
                                  'image', 'category')
-        # TODO: Check if user is admin, if so, return all, otherwise, return only approved (And mask the fields)
-        # Right now, this is for an admin user
+
         if 'start_date' in request.GET and 'end_date' in request.GET:
             iso8601_format = '%Y-%m-%dT%H:%M:%S%Z'
             records = Comment.objects.filter(map_id=mapid,
@@ -442,6 +438,24 @@ def request_comments(request, mapid):
             for item in orig_records:
                 feature = {'id': item.id, 'properties': {}, 'type': 'Feature'}
                 if item.feature_geom and item.feature_geom != '':
+                    feature['geometry'] = json.loads(item.feature_geom)
+                for key in feature_property_keys:
+                    feature['properties'][key] = getattr(item, key)
+                results.append(feature)
+            return results
+
+        return JsonResponse({'type': 'FeatureCollection', 'features': to_features(records)})
+    # Otherwise, this should just be a GET by a user
+    else:
+        feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
+                                 'title', 'message', 'image', 'category')
+        records = Comment.objects.filter(map_id=mapid, status='Approved').order_by('-submit_date_time')
+
+        def to_features(orig_records):
+            results = []
+            for item in orig_records:
+                feature = {'id': item.id, 'properties': {}, 'type': 'Feature'}
+                if item.feature_geom and item.feature_geom != '':
                     feature['geometry'] = json.loads(item.feature_geom)['geometry']
                 for key in feature_property_keys:
                     feature['properties'][key] = getattr(item, key)
@@ -449,3 +463,5 @@ def request_comments(request, mapid):
             return results
 
         return JsonResponse({'type': 'FeatureCollection', 'features': to_features(records)})
+
+
