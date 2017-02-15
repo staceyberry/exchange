@@ -448,7 +448,7 @@ def request_comments(request, mapid):
     # Otherwise, this should just be a GET by a user
     else:
         feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
-                                 'title', 'message', 'image', 'category')
+                                 'title', 'message', 'image', 'category', 'status')
         records = Comment.objects.filter(map_id=mapid, status='Approved').order_by('-submit_date_time')
 
         def to_features(orig_records):
@@ -456,7 +456,7 @@ def request_comments(request, mapid):
             for item in orig_records:
                 feature = {'id': item.id, 'properties': {}, 'type': 'Feature'}
                 if item.feature_geom and item.feature_geom != '':
-                    feature['geometry'] = json.loads(item.feature_geom)['geometry']
+                    feature['geometry'] = json.loads(item.feature_geom)
                 for key in feature_property_keys:
                     feature['properties'][key] = getattr(item, key)
                 results.append(feature)
