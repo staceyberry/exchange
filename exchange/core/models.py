@@ -156,6 +156,14 @@ class CommentUserForm(forms.ModelForm):
         fields = ('username', 'feature_reference', 'feature_geom', 'title', 'message',
                   'map_id', 'image', 'category')
 
+class CommentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('id', 'approver', 'approved_date', 'status', 'username', 'feature_reference',
+                  'feature_geom', 'title', 'message',
+                  'map_id', 'image', 'category')
+
+
 class CSWRecordForm(forms.ModelForm):
     class Meta:
         model = CSWRecord

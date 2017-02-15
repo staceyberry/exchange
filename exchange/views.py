@@ -4,7 +4,7 @@ from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 from django.conf import settings
 from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, QueryDict
 from django.core.urlresolvers import reverse
 from django.core.serializers import serialize
 from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, Comment, CommentUserForm
@@ -405,14 +405,14 @@ def request_comments(request, mapid):
         return HttpResponse(form.errors.as_json(), content_type="application/json")
     elif request.method == 'PUT':
         if request.user.is_staff:
-            record = Comment.objects.filter(id=request.PUT['id'])
-            form = CommentUserForm(request.PUT)
-            if form.is_valid():
-                new_record = form.save(commit=False)
-                new_record.approver = request.user.username
-                new_record.save()
-                return JsonResponse({'success': True})
-            return HttpResponse(form.errors.as_json(), content_type="application/json")
+            qd = QueryDict(request.body)
+            put_dict = {k: v[0] if len(v) == 1 else v for k, v in qd.lists()}
+            record = Comment.objects.get(id=put_dict['id'])
+            record.status = put_dict['status']
+            record.approved_date = datetime.datetime.now()
+            record.approver = request.user.username
+            record.save()
+            return JsonResponse({'success': True})
         return HttpResponse('Unauthorized', status=401)
     elif request.user.is_staff:
         feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
