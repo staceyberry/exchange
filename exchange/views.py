@@ -7,7 +7,8 @@ from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, QueryDict
 from django.core.urlresolvers import reverse
 from django.core.serializers import serialize
-from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, Comment, CommentUserForm
+from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, Comment, CommentUserForm, \
+    MapCommentEnabledForm, MapCommentEnabled
 from exchange.tasks import create_new_csw
 from geonode.maps.views import _resolve_map
 import requests
@@ -393,6 +394,30 @@ def unified_elastic_search(request):
     }
 
     return JsonResponse(object_list)
+
+
+def set_comments(request, mapid):
+    if request.method == 'POST':
+        if request.user.is_staff:
+            try:
+                record = MapCommentEnabled.objects.get(map_id=mapid)
+                record.enabled = request.POST['enabled']
+                record.save()
+            except MapCommentEnabled.DoesNotExist:
+                model = request.POST.copy()
+                model['map_id'] = mapid
+                form = MapCommentEnabledForm(model)
+                if form.is_valid():
+                    form.save()
+            return JsonResponse({'success': True})
+        return HttpResponse('Unauthorized', status=401)
+    else:
+        try:
+            record = MapCommentEnabled.objects.get(map_id=mapid)
+            return JsonResponse({'enabled': record.enabled})
+        except MapCommentEnabled.DoesNotExist:
+            return JsonResponse({'enabled': False})
+
 
 def request_comments(request, mapid):
     if request.method == 'POST':

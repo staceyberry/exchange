@@ -40,6 +40,8 @@ urlpatterns = patterns(
         name='map_metadata_detail'),
     url(r'^maps/(?P<mapid>[^/]*)/comments$', views.request_comments,
         name='map_comments'),
+    url(r'^maps/(?P<mapid>[^/]*)/setComments$', views.set_comments,
+        name='set_comments'),
     url(r'^wfsproxy/', views.geoserver_reverse_proxy,
         name='geoserver_reverse_proxy'),
     # Redirect help and developer links to the documentation page

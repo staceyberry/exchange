@@ -94,7 +94,6 @@ class CSWRecord(models.Model):
 
     classification = models.CharField(max_length=128, blank=True)
     title = models.CharField(max_length=128, blank=False)
-    comments_enabled = models.BooleanField(default=True, blank=False)
     modified = models.DateField(default=datetime.date.today, blank=False)
     # 'creator' is assumed to be distinct from logged-in User here
     creator = models.CharField(max_length=128, blank=True)
@@ -115,6 +114,14 @@ class CSWRecord(models.Model):
     category = models.CharField(max_length=128, choices=category_choices,
                                 blank=True)
 
+class MapCommentEnabled(models.Model):
+    map_id = models.IntegerField()
+    enabled = models.BooleanField()
+
+class MapCommentEnabledForm(forms.ModelForm):
+    class Meta:
+        model = MapCommentEnabled
+        fields = ('map_id', 'enabled')
 
 class Comment(models.Model):
     comment_category_choices = (
@@ -167,7 +174,7 @@ class CommentAdminForm(forms.ModelForm):
 class CSWRecordForm(forms.ModelForm):
     class Meta:
         model = CSWRecord
-        fields = ('title', 'comments_enabled', 'modified', 'creator', 'record_type', 'alternative', 'abstract',
+        fields = ('title', 'modified', 'creator', 'record_type', 'alternative', 'abstract',
                   'source', 'relation', 'record_format', 'bbox_upper_corner',
                   'bbox_lower_corner', 'contact_information', 'gold',
                   'category')
