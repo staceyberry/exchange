@@ -14,6 +14,7 @@ import requests
 import logging
 import json
 import datetime
+import csv
 
 logger = logging.getLogger(__name__)
 
@@ -393,7 +394,6 @@ def unified_elastic_search(request):
 
     return JsonResponse(object_list)
 
-
 def request_comments(request, mapid):
     if request.method == 'POST':
         form = CommentUserForm(request.POST)
@@ -430,7 +430,20 @@ def request_comments(request, mapid):
         else:
             records = Comment.objects.filter(map_id=mapid).order_by('-submit_date_time')
 
-        # TODO: Add check to see if it wants csv
+        if 'csv' in request.GET:
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=map-comments.csv'
+            response['Content-Encoding'] = 'utf-8'
+            writer = csv.writer(response)
+            writer.writerow(feature_property_keys)
+            # default csv writer chokes on unicode
+            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else str(v)
+            get_value = lambda a, c: getattr(a, c) if c not in ('start_time', 'end_time') else ''
+            for a in records:
+                vals = [encode(get_value(a, c)) for c in feature_property_keys]
+                writer.writerow(vals)
+            return response
+
         # format = request.GET.get('format', "")
         # if format.lower() == 'json':
         def to_features(orig_records):
