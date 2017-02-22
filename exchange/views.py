@@ -132,6 +132,20 @@ def geocode(request):
         return JsonResponse({'error': 'No address supplied'})
 
 
+def geocode(request):
+    geolocator = Nominatim()
+    location_string = request.GET.get('address')
+    if location_string:
+        results = geolocator.geocode(location_string)
+        if results is not None:
+            return JsonResponse({'coordinates': {'lat': results.latitude, 'lon': results.longitude},
+                                 'address': results.address})
+        else:
+            return JsonResponse({'error': 'No coordinates found'})
+    else:
+        return JsonResponse({'error': 'No address supplied'})
+
+
 def map_metadata_detail(request, mapid,
                         template='maps/metadata_detail.html'):
 
