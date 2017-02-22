@@ -16,6 +16,7 @@ from exchange.core.forms import CSWRecordReferenceFormSet, CSWRecordReferenceFor
 from geonode.base.models import TopicCategory
 from exchange.tasks import create_new_csw, update_csw, delete_csw, load_service_layers
 from geonode.maps.views import _resolve_map
+from geopy.geocoders import Nominatim
 import requests
 import logging
 import datetime
@@ -46,6 +47,20 @@ def layer_metadata_detail(request, layername,
         "layer": layer,
         'SITEURL': settings.SITEURL[:-1]
     }))
+
+
+def geocode(request):
+    geolocator = Nominatim()
+    location_string = request.GET.get('address')
+    if location_string:
+        results = geolocator.geocode(location_string)
+        if results is not None:
+            return JsonResponse({'coordinates': {'lat': results.latitude, 'lon': results.longitude},
+                                 'address': results.address})
+        else:
+            return JsonResponse({'error': 'No coordinates found'})
+    else:
+        return JsonResponse({'error': 'No address supplied'})
 
 
 def map_metadata_detail(request, mapid,
