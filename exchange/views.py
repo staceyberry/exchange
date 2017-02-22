@@ -11,6 +11,7 @@ from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordFo
 from geonode.base.models import TopicCategory
 from exchange.tasks import create_new_csw
 from geonode.maps.views import _resolve_map
+from geopy.geocoders import Nominatim
 import requests
 import logging
 
@@ -70,6 +71,20 @@ def layer_metadata_detail(request, layername,
         "thumbnail": thumbnail,
         "thumb_form": thumb_form
     }))
+
+
+def geocode(request):
+    geolocator = Nominatim()
+    location_string = request.GET.get('address')
+    if location_string:
+        results = geolocator.geocode(location_string)
+        if results is not None:
+            return JsonResponse({'coordinates': {'lat': results.latitude, 'lon': results.longitude},
+                                 'address': results.address})
+        else:
+            return JsonResponse({'error': 'No coordinates found'})
+    else:
+        return JsonResponse({'error': 'No address supplied'})
 
 
 def map_metadata_detail(request, mapid,
