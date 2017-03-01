@@ -20,6 +20,7 @@ from geopy.geocoders import Nominatim
 import requests
 import logging
 import datetime
+
 from django.views.generic import CreateView, UpdateView, ListView
 
 from django.core.urlresolvers import reverse_lazy
@@ -47,6 +48,78 @@ def layer_metadata_detail(request, layername,
         "layer": layer,
         'SITEURL': settings.SITEURL[:-1]
     }))
+
+def breadcrumbs(request):
+    if 'startDate' not in request.GET:
+        return JsonResponse({'error': 'startDate is required'})
+    if 'endDate' not in request.GET:
+        return JsonResponse({'error': 'endDate is required'})
+    if 'tailNumber' not in request.GET:
+        return JsonResponse({'error': 'tailNumber is required'})
+
+    try:
+        start_date = datetime.datetime.strptime(request.GET.get('startDate'), '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(request.GET.get('endDate'), '%Y-%m-%d')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format, must be Y-m-d'})
+
+    if end_date <= start_date:
+        return JsonResponse({'error': 'Start date must be before end date'})
+    delta = end_date - start_date
+    if delta.days > 2:
+        return JsonResponse({'error': 'Maximum search range is 2 days'})
+
+    tail_number = request.GET.get('tailNumber')
+    # mmu_msg_idx,
+    # pos_dtg,
+    # aircraftid,
+    # msgtype,
+    # xy_lat,
+    # xy_lon,
+    # altitude,
+    # speed,
+    # heading,
+    # sdo_geometry
+    #run sql command
+    fake_response = {
+        'type': 'FeatureCollection',
+        'features': [
+            {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [-95.366302, 29.761993]
+                },
+                'properties': {
+                    'mmu_msg_idx': 0,
+                    'pos_dtg': '',
+                    'aircraftid': 'a',
+                    'msgtype': 'j',
+                    'altitude': 1000,
+                    'speed': 15,
+                    'heading': 12
+                }
+            },
+            {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [-99.1332, 19.4326]
+                },
+                'properties': {
+                    'mmu_msg_idx': 1,
+                    'pos_dtg': '',
+                    'aircraftid': 'b',
+                    'msgtype': 'a',
+                    'altitude': 10000,
+                    'speed': 150,
+                    'heading': 120
+                }
+            }
+        ]
+    }
+
+    return JsonResponse(fake_response)
 
 
 def geocode(request):
