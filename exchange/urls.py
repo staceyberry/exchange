@@ -45,6 +45,7 @@ urlpatterns = patterns(
     url(r'^developer/$', views.documentation_page, name='developer'),
     url(r'^csw/new/$', views.insert_csw, name='insert_csw'),
     url(r'^geocode/$', views.geocode, name='geocode'),
+    url(r'^breadcrumbs/$', views.breadcrumbs, name='breadcrumbs'),
     url(r'^csw/status/$', views.csw_status, name='csw_status'),
     url(r'^csw/status_table/$', views.csw_status_table, name='csw_status_table'),
 )
