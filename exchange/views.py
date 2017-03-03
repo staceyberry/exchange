@@ -15,6 +15,7 @@ from geopy.geocoders import Nominatim
 import requests
 import logging
 import datetime
+import cx_Oracle
 
 logger = logging.getLogger(__name__)
 
@@ -93,57 +94,52 @@ def breadcrumbs(request):
     if delta.days > 2:
         return JsonResponse({'error': 'Maximum search range is 2 days'})
 
-    tail_number = request.GET.get('tailNumber')
-    # mmu_msg_idx,
-    # pos_dtg,
-    # aircraftid,
-    # msgtype,
-    # xy_lat,
-    # xy_lon,
-    # altitude,
-    # speed,
-    # heading,
-    # sdo_geometry
-    #run sql command
-    fake_response = {
+    start_date = start_date.strftime('%d-%b-%Y')
+    end_date = start_date.strftime('%d-%b-%Y')
+
+    statement = '''
+      SELECT a.mmu_msg_idx,
+       a.pos_dtg,
+       a.aircraftid,
+       a.msgtype,
+       a.xy_lat,
+       a.xy_lon,
+       a.altitude,
+       a.speed,
+       a.heading
+      FROM scmmu.hl_mmu_messages a
+      WHERE a.msgtype IN ('Position', 'Arrival', 'Departure')
+        AND a.aircraftid = :tail_number
+        AND a.pos_dtg BETWEEN TO_DATE (:start_date)
+                         AND TO_DATE (:end_date)
+      ORDER BY a.pos_dtg
+    '''
+
+    result = {
         'type': 'FeatureCollection',
         'features': [
-            {
-                'type': 'Feature',
-                'geometry': {
-                    'type': 'Point',
-                    'coordinates': [-95.366302, 29.761993]
-                },
-                'properties': {
-                    'mmu_msg_idx': 0,
-                    'pos_dtg': '',
-                    'aircraftid': 'a',
-                    'msgtype': 'j',
-                    'altitude': 1000,
-                    'speed': 15,
-                    'heading': 12
-                }
-            },
-            {
-                'type': 'Feature',
-                'geometry': {
-                    'type': 'Point',
-                    'coordinates': [-99.1332, 19.4326]
-                },
-                'properties': {
-                    'mmu_msg_idx': 1,
-                    'pos_dtg': '',
-                    'aircraftid': 'b',
-                    'msgtype': 'a',
-                    'altitude': 10000,
-                    'speed': 150,
-                    'heading': 120
-                }
-            }
         ]
     }
 
-    return JsonResponse(fake_response)
+    tail_number = request.GET.get('tailNumber')
+
+    con = cx_Oracle.connect('pythonhol/welcome@127.0.0.1/orcl')
+    cur = con.cursor()
+    cur.prepare(statement)
+    cur.execute(None, {'tail_number': tail_number, 'start_date': start_date, 'end_date': end_date})
+    for record in cur:
+        result.features.push({
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [record.xy_lon, record.xy_lat]
+            },
+            'properties': record
+        })
+    cur.close()
+    con.close()
+
+    return JsonResponse(result)
 
 
 def geocode(request):
