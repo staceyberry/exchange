@@ -36,6 +36,8 @@ RUN sed -i -e 's:keepcache=0:keepcache=1:' /etc/yum.conf && \
                    sqlite-devel \
                    tk-devel \
                    zlib-devel \
+                   unzip \
+                   libaio \
     && \
     # Create the virtualenv the app will run in
     /usr/local/bin/virtualenv /env && chmod -R 755 /env
@@ -43,6 +45,22 @@ RUN sed -i -e 's:keepcache=0:keepcache=1:' /etc/yum.conf && \
 # Add Exchange requirements list to pip install during container build.
 # All work done AFTER this line will be re-done when requirements.txt changes.
 COPY requirements.txt /mnt/exchange/req.txt
+
+
+
+ENV ORACLE_HOME /usr/lib/oracle/11.1/client64/
+ENV LD_RUN_PATH=$ORACLE_HOME:"${LD_RUN_PATH}"
+COPY oracle/* /tmp/
+
+# Taken from http://www.oracle.com/technetwork/topics/linuxx86-64soft-092277.html
+# and placed in oracle directory
+# oracle-instantclient11.1-basic-11.1.0.7.0-1.x86_64.rpm
+# oracle-instantclient11.1-devel-11.1.0.7.0-1.x86_64.rpm
+RUN rpm -ivh /tmp/oracle-instantclient11.1-basic-*
+RUN rpm -ivh /tmp/oracle-instantclient11.1-devel-*
+RUN ln -s $ORACLE_HOME/libclntsh.so.11.1 $ORACLE_HOME/libclntsh.so
+
+
 
 # install requirements after removing geonode entry
 RUN sed -i.bak "/egg=geonode/d" /mnt/exchange/req.txt && \

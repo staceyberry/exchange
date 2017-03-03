@@ -5,6 +5,11 @@ set -e
 # export DJANGO_STATIC_ROOT='/scratch/static_root'
 # export DJANGO_MEDIA_ROOT='/scratch/media_root'
 
+export ORACLE_HOME=/usr/lib/oracle/11.1/client64/
+export ORACLE_VERSION=11.1
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH
+export PATH=$PATH:$ORACLE_HOME/bin
+
 if [[ $PATH != *"pgsql-9.6"* ]];then
   export PATH=$PATH:/usr/pgsql-9.6/bin
 fi
