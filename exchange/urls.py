@@ -18,7 +18,7 @@
 #
 #########################################################################
 
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, url, include
 from django.conf.urls.static import static
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -57,6 +57,11 @@ if settings.REGISTRY is False:
         url(r'^services(.*)$', page_not_found)
     ]
 
+if settings.ENABLE_SOCIAL_LOGIN is True:
+    urlpatterns += [
+        url('', include('social_django.urls', namespace='social'))
+    ]
+
 # If django-osgeo-importer is enabled...
 if 'osgeo_importer' in settings.INSTALLED_APPS:
     # Replace the default Exchange 'layers/upload'
@@ -74,7 +79,19 @@ if 'osgeo_importer' in settings.INSTALLED_APPS:
 
 # use combined registry/geonode elastic search rather than geonode search
 if settings.ES_UNIFIED_SEARCH:
-    urlpatterns += [url(r'^api/base/search/$',
+    urlpatterns += [url(r'^api/(?P<resourcetype>base)/search/$',
+                        views.unified_elastic_search,
+                        name='unified_elastic_search')]
+    urlpatterns += [url(r'^api/(?P<resourcetype>documents)/search/$',
+                        views.unified_elastic_search,
+                        name='unified_elastic_search')]
+    urlpatterns += [url(r'^api/(?P<resourcetype>layers)/search/$',
+                        views.unified_elastic_search,
+                        name='unified_elastic_search')]
+    urlpatterns += [url(r'^api/(?P<resourcetype>maps)/search/$',
+                        views.unified_elastic_search,
+                        name='unified_elastic_search')]
+    urlpatterns += [url(r'^api/(?P<resourcetype>registry)/search/$',
                         views.unified_elastic_search,
                         name='unified_elastic_search')]
 

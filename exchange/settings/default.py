@@ -34,7 +34,17 @@ from geonode.settings import (
 
 
 def str2bool(v):
-    return v.lower() in ("yes", "true", "t", "1")
+    if v and len(v) > 0:
+        return v.lower() in ("yes", "true", "t", "1")
+    else:
+        return False
+
+
+def isValid(v):
+    if v and len(v) > 0:
+        return True
+    else:
+        return False
 
 SITENAME = os.getenv('SITENAME', 'exchange')
 WSGI_APPLICATION = "exchange.wsgi.application"
@@ -133,11 +143,10 @@ if OSGEO_IMPORTER_ENABLED:
     INSTALLED_APPS = ('osgeo_importer',) + INSTALLED_APPS
 else:
     UPLOADER = {
-        'BACKEND': 'geonode.rest',
+        'BACKEND': 'geonode.importer',
         'OPTIONS': {
             'TIME_ENABLED': True,
             'MOSAIC_ENABLED': False,
-            'GEOGIG_ENABLED': True,
         }
     }
 
@@ -154,7 +163,7 @@ ADDITIONAL_AUTH_EXEMPT_URLS = os.environ.get(
 if isinstance(ADDITIONAL_AUTH_EXEMPT_URLS, str):
     ADDITIONAL_AUTH_EXEMPT_URLS = tuple(map(str.strip, ADDITIONAL_AUTH_EXEMPT_URLS.split(',')))
 
-AUTH_EXEMPT_URLS = ('/api/o/*', '/api/roles', '/api/adminRole', '/api/users', '/o/token/*', '/o/authorize/*',) + ADDITIONAL_AUTH_EXEMPT_URLS
+AUTH_EXEMPT_URLS = ('/complete/*', '/login/*', '/api/o/*', '/api/roles', '/api/adminRole', '/api/users', '/o/token/*', '/o/authorize/*',) + ADDITIONAL_AUTH_EXEMPT_URLS
 
 # geoserver settings
 GEOSERVER_URL = os.environ.get(
@@ -229,8 +238,8 @@ DATABASES['exchange_imports'] = dj_database_url.parse(
     conn_max_age=600
 )
 
-WGS84_MAP_CRS = os.environ.get('WGS84_MAP_CRS', None)
-if WGS84_MAP_CRS is not None:
+WGS84_MAP_CRS = str2bool(os.environ.get('WGS84_MAP_CRS', False))
+if WGS84_MAP_CRS:
     DEFAULT_MAP_CRS = "EPSG:4326"
 
 # local pycsw
@@ -330,23 +339,7 @@ LOGGING['loggers']['django.db.backends'] = {
 AUTH_LDAP_SERVER_URI = os.environ.get('AUTH_LDAP_SERVER_URI', None)
 LDAP_SEARCH_DN = os.environ.get('LDAP_SEARCH_DN', None)
 if all([AUTH_LDAP_SERVER_URI, LDAP_SEARCH_DN]):
-
-    import ldap
-    from django_auth_ldap.config import LDAPSearch
-
-    AUTHENTICATION_BACKENDS = (
-        'django_auth_ldap.backend.LDAPBackend',
-        'django.contrib.auth.backends.ModelBackend',
-        'guardian.backends.ObjectPermissionBackend',
-    )
-    AUTH_LDAP_USER = '(uid=%(user)s)'
-    AUTH_LDAP_BIND_DN = os.environ.get('AUTH_LDAP_BIND_DN', '')
-    AUTH_LDAP_BIND_PASSWORD = os.environ.get('AUTH_LDAP_BIND_PASSWORD', '')
-    AUTH_LDAP_USER_ATTR_MAP = {
-        'first_name': 'givenName', 'last_name': 'sn', 'email': 'mail',
-    }
-    AUTH_LDAP_USER_SEARCH = LDAPSearch(LDAP_SEARCH_DN,
-                                       ldap.SCOPE_SUBTREE, AUTH_LDAP_USER)
+    from ._ldap import *   # noqa
 
 # geoaxis
 GEOAXIS_ENABLED = str2bool(os.getenv('GEOAXIS_ENABLED', 'False'))
@@ -416,3 +409,53 @@ SESSION_COOKIE_AGE = 60 * 60 * 24
 # manually
 DEFAULT_ANONYMOUS_VIEW_PERMISSION = True
 DEFAULT_ANONYMOUS_DOWNLOAD_PERMISSION = True
+
+ENABLE_SOCIAL_LOGIN = str2bool(os.getenv('ENABLE_SOCIAL_LOGIN', 'False'))
+
+if ENABLE_SOCIAL_LOGIN:
+    INSTALLED_APPS = ('social_django',) + INSTALLED_APPS
+    SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
+
+    AUTHENTICATION_BACKENDS += (
+        'social_core.backends.google.GoogleOpenId',
+        'social_core.backends.google.GoogleOAuth2',
+        'social_core.backends.facebook.FacebookOAuth2',
+    )
+
+    DEFAULT_AUTH_PIPELINE = (
+        'social_core.pipeline.social_auth.social_details',
+        'social_core.pipeline.social_auth.social_uid',
+        'social_core.pipeline.social_auth.auth_allowed',
+        'social_core.pipeline.social_auth.social_user',
+        'social_core.pipeline.user.get_username',
+        'social_core.pipeline.mail.mail_validation',
+        'social_core.pipeline.social_auth.associate_by_email',
+        'social_core.pipeline.user.create_user',
+        'social_core.pipeline.social_auth.associate_user',
+        'social_core.pipeline.social_auth.load_extra_data',
+        'social_core.pipeline.user.user_details'
+    )
+
+    SOCIAL_AUTH_FACEBOOK_KEY = os.environ.get('OAUTH_FACEBOOK_KEY', None)
+    SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('OAUTH_FACEBOOK_SECRET', None)
+
+    OAUTH_FACEBOOK_SCOPES = os.environ.get('OAUTH_FACEBOOK_SCOPES', 'email')
+    SOCIAL_AUTH_FACEBOOK_SCOPE = map(str.strip, OAUTH_FACEBOOK_SCOPES.split(','))
+    SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
+        'fields': os.environ.get('OAUTH_FACEBOOK_PROFILE_EXTRA_PARAMS', 'id,name,email'),
+    }
+    ENABLE_FACEBOOK_LOGIN = isValid(SOCIAL_AUTH_FACEBOOK_KEY)
+
+    SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('OAUTH_GOOGLE_KEY', None)
+    SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('OAUTH_GOOGLE_SECRET', None)
+    ENABLE_GOOGLE_LOGIN = isValid(SOCIAL_AUTH_GOOGLE_OAUTH2_KEY)
+
+    SOCIAL_AUTH_GEOAXIS_KEY = os.environ.get('OAUTH_GEOAXIS_KEY', None)
+    SOCIAL_AUTH_GEOAXIS_SECRET = os.environ.get('OAUTH_GEOAXIS_SECRET', None)
+    SOCIAL_AUTH_GEOAXIS_HOST = os.environ.get('OAUTH_GEOAXIS_HOST', None)
+    ENABLE_GEOAXIS_LOGIN = isValid(SOCIAL_AUTH_GEOAXIS_KEY)
+    # GeoAxisOAuth2 will cause all login attempt to fail if SOCIAL_AUTH_GEOAXIS_HOST is None
+    if ENABLE_GEOAXIS_LOGIN:
+        AUTHENTICATION_BACKENDS += (
+            'exchange.auth.backends.geoaxis.GeoAxisOAuth2',
+        )
