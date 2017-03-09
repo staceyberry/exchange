@@ -11,8 +11,11 @@ from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordFo
 from geonode.base.models import TopicCategory
 from exchange.tasks import create_new_csw
 from geonode.maps.views import _resolve_map
+from geopy.geocoders import Nominatim
 import requests
 import logging
+import datetime
+import cx_Oracle
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +73,87 @@ def layer_metadata_detail(request, layername,
         "thumbnail": thumbnail,
         "thumb_form": thumb_form
     }))
+
+def breadcrumbs(request):
+    if 'startDate' not in request.GET:
+        return JsonResponse({'error': 'startDate is required'})
+    if 'endDate' not in request.GET:
+        return JsonResponse({'error': 'endDate is required'})
+    if 'tailNumber' not in request.GET:
+        return JsonResponse({'error': 'tailNumber is required'})
+
+    try:
+        start_date = datetime.datetime.strptime(request.GET.get('startDate'), '%Y-%m-%d')
+        end_date = datetime.datetime.strptime(request.GET.get('endDate'), '%Y-%m-%d')
+    except ValueError:
+        return JsonResponse({'error': 'Invalid date format, must be Y-m-d'})
+
+    if end_date <= start_date:
+        return JsonResponse({'error': 'Start date must be before end date'})
+    delta = end_date - start_date
+    if delta.days > 2:
+        return JsonResponse({'error': 'Maximum search range is 2 days'})
+
+    start_date = start_date.strftime('%d-%b-%Y')
+    end_date = start_date.strftime('%d-%b-%Y')
+
+    statement = '''
+      SELECT a.mmu_msg_idx,
+       a.pos_dtg,
+       a.aircraftid,
+       a.msgtype,
+       a.xy_lat,
+       a.xy_lon,
+       a.altitude,
+       a.speed,
+       a.heading
+      FROM scmmu.hl_mmu_messages a
+      WHERE a.msgtype IN ('Position', 'Arrival', 'Departure')
+        AND a.aircraftid = :tail_number
+        AND a.pos_dtg BETWEEN TO_DATE (:start_date)
+                         AND TO_DATE (:end_date)
+      ORDER BY a.pos_dtg
+    '''
+
+    result = {
+        'type': 'FeatureCollection',
+        'features': [
+        ]
+    }
+
+    tail_number = request.GET.get('tailNumber')
+
+    con = cx_Oracle.connect('pythonhol/welcome@127.0.0.1/orcl')
+    cur = con.cursor()
+    cur.prepare(statement)
+    cur.execute(None, {'tail_number': tail_number, 'start_date': start_date, 'end_date': end_date})
+    for record in cur:
+        result.features.push({
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [record.xy_lon, record.xy_lat]
+            },
+            'properties': record
+        })
+    cur.close()
+    con.close()
+
+    return JsonResponse(result)
+
+
+def geocode(request):
+    geolocator = Nominatim()
+    location_string = request.GET.get('address')
+    if location_string:
+        results = geolocator.geocode(location_string)
+        if results is not None:
+            return JsonResponse({'coordinates': {'lat': results.latitude, 'lon': results.longitude},
+                                 'address': results.address})
+        else:
+            return JsonResponse({'error': 'No coordinates found'})
+    else:
+        return JsonResponse({'error': 'No address supplied'})
 
 
 def map_metadata_detail(request, mapid,
