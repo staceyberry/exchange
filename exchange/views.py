@@ -435,7 +435,7 @@ def set_comments(request, mapid):
         if request.user.is_staff:
             try:
                 record = MapCommentEnabled.objects.get(map_id=mapid)
-                record.enabled = request.POST['enabled']
+                record.enabled = request.POST['enabled'] == 'true'
                 record.save()
             except MapCommentEnabled.DoesNotExist:
                 model = request.POST.copy()
