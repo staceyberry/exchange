@@ -459,6 +459,20 @@
     <li class="list-group-item">
       <h4>{% trans "Create a map using this layer" %}</h4>
       <p>{% trans "Click the button below to generate a new map based on this layer." %}</p>
+        <!-- TODO: Have this dynamically pulled -->
+        <h5>{% trans "Renderer" %}</h5>
+        <!-- TODO: Move this into css -->
+        <ul class="list-unstyled" style="margin-bottom: 12px;">
+            <li>
+                <input type="radio" checked name="renderer" id="Maploom" value="MapLoom"/> MapLoom
+            </li>
+            <li>
+                <input type="radio" name="renderer" value="WebSDK" id="WebSDK"/> WebSDK
+            </li>
+            <li>
+                <input type="radio" name="renderer" value="StoryTools" id="StoryTools"/> StoryTools Composer
+            </li>
+        </ul>
         <a href="{% url "new_map" %}?layer={{resource.service_typename}}" class="btn btn-primary btn-block">{% trans "Create a Map" %}</a>
     </li>
 

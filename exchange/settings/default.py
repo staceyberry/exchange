@@ -157,7 +157,7 @@ INSTALLED_APPS = (
     'geonode.contrib.geogig',
     'geonode.contrib.slack',
     'django_classification_banner',
-    'maploom',
+    # 'maploom',
     'solo',
     'exchange-docs',
 ) + ADDITIONAL_APPS + INSTALLED_APPS
