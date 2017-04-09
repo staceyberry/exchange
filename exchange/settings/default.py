@@ -157,7 +157,7 @@ INSTALLED_APPS = (
     'geonode.contrib.geogig',
     'geonode.contrib.slack',
     'django_classification_banner',
-    # 'maploom',
+    'maploom',
     'solo',
     'exchange-docs',
 ) + ADDITIONAL_APPS + INSTALLED_APPS
@@ -176,6 +176,7 @@ else:
 if GEONODE_CLIENT_ENABLED:
     INSTALLED_APPS = ('geonode-client',) + INSTALLED_APPS
     LAYER_PREVIEW_LIBRARY = 'react'
+LAYER_PREVIEW_LIBRARY = 'maploom'
 
 # authorized exempt urls
 ADDITIONAL_AUTH_EXEMPT_URLS = os.environ.get(

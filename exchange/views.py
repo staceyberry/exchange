@@ -172,7 +172,6 @@ def csw_status_table(request):
                                },
                               context_instance=RequestContext(request))
 
-
 def unified_elastic_search(request, resourcetype='base'):
     import re
     import requests
