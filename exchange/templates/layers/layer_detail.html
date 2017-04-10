@@ -459,18 +459,22 @@
     <li class="list-group-item">
       <h4>{% trans "Create a map using this layer" %}</h4>
       <p>{% trans "Click the button below to generate a new map based on this layer." %}</p>
-        <ul class="list-unstyled renderer-popup">
-            <li>
-                <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=maploom" class="btn btn-primary btn-block">{% trans "Create a Maploom Map" %}</a>
-            </li>
-            <li>
-                <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=geoext" class="btn btn-primary btn-block">{% trans "Create a GeoEXT Map" %}</a>
-            </li>
-            <li>
-                <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=react" class="btn btn-primary btn-block">{% trans "Create a React Map" %}</a>
-            </li>
-        </ul>
-        <!--<a href="{% url "new_map" %}?layer={{resource.service_typename}}" class="btn btn-primary btn-block">{% trans "Create a Map" %}</a>-->
+        <div class="dropdown">
+          <a class="btn btn-primary btn-block dropdown-toggle" type="button" id="newMapButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            {% trans "Create a Map" %} <i class="fa fa-chevron-circle-down"></i>
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="newMapButton">
+              <li>
+                  <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=maploom" class="btn">{% trans "Create a Maploom Map" %}</a>
+              </li>
+              <li>
+                  <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=geoext" class="btn">{% trans "Create a GeoEXT Map" %}</a>
+              </li>
+              <li>
+                  <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=react" class="btn">{% trans "Create a React Map" %}</a>
+              </li>
+          </ul>
+        </div>
     </li>
 
     {% if documents.count > 0 %}
