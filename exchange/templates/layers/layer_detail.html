@@ -464,15 +464,11 @@
             {% trans "Create a Map" %} <i class="fa fa-chevron-circle-down"></i>
           </a>
           <ul class="dropdown-menu" aria-labelledby="newMapButton">
-              <li>
-                  <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=maploom" class="btn">{% trans "Create a Maploom Map" %}</a>
-              </li>
-              <li>
-                  <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=geoext" class="btn">{% trans "Create a GeoEXT Map" %}</a>
-              </li>
-              <li>
-                  <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=react" class="btn">{% trans "Create a React Map" %}</a>
-              </li>
+              {% for key, readable in available_renderers %}
+                <li>
+                    <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer={{key}}" class="btn">{% blocktrans %}Create a {{readable}} Map{% endblocktrans %}</a>
+                </li>
+              {% endfor %}
           </ul>
         </div>
     </li>
