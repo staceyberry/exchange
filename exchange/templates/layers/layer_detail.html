@@ -459,20 +459,18 @@
     <li class="list-group-item">
       <h4>{% trans "Create a map using this layer" %}</h4>
       <p>{% trans "Click the button below to generate a new map based on this layer." %}</p>
-        <h5>{% trans "Renderer" %}</h5>
-        <!-- TODO: Move this into css -->
-        <ul class="list-unstyled" style="margin-bottom: 12px;">
+        <ul class="list-unstyled renderer-popup">
             <li>
-                <input type="radio" checked name="renderer" id="Maploom" value="maploom"/> MapLoom
+                <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=maploom" class="btn btn-primary btn-block">{% trans "Create a Maploom Map" %}</a>
             </li>
             <li>
-                <input type="radio" name="renderer" value="geoext" id="GeoEXT"/> GeoEXT
+                <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=geoext" class="btn btn-primary btn-block">{% trans "Create a GeoEXT Map" %}</a>
             </li>
             <li>
-                <input type="radio" name="renderer" value="react" id="React"/> React
+                <a href="{% url "new_map" %}?layer={{resource.service_typename}}&renderer=react" class="btn btn-primary btn-block">{% trans "Create a React Map" %}</a>
             </li>
         </ul>
-        <a href="{% url "new_map" %}?layer={{resource.service_typename}}" class="btn btn-primary btn-block">{% trans "Create a Map" %}</a>
+        <!--<a href="{% url "new_map" %}?layer={{resource.service_typename}}" class="btn btn-primary btn-block">{% trans "Create a Map" %}</a>-->
     </li>
 
     {% if documents.count > 0 %}
