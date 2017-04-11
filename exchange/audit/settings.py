@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #########################################################################
 #
-# Copyright (C) 2016 Boundless Spatial
+# Copyright (C) 2017 Boundless Spatial
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,9 +18,16 @@
 #
 #########################################################################
 
-__version__ = '1.2.0b3'
+from django.conf import settings
 
 
-def get_version():
-    import exchange.version
-    return exchange.version.get_version(__version__)
+AUDIT_TO_FILE = getattr(
+    settings,
+    'AUDIT_TO_FILE',
+    False
+)
+AUDIT_LOGFILE_LOCATION = getattr(
+    settings,
+    'AUDIT_LOGFILE_LOCATION',
+    'exchange_audit_log.json'
+)

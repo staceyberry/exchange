@@ -21,7 +21,6 @@
 import os
 import dj_database_url
 import copy
-import django
 from geonode.settings import *  # noqa
 from geonode.settings import (
     MIDDLEWARE_CLASSES,
@@ -286,7 +285,7 @@ ES_ENGINE = os.environ.get(
     'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine'
 )
 HAYSTACK_SEARCH = str2bool(os.getenv('HAYSTACK_SEARCH', 'False'))
-if ES_UNIFIED_SEARCH == True:
+if ES_UNIFIED_SEARCH:
     HAYSTACK_SEARCH = True
 if HAYSTACK_SEARCH:
     HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
@@ -316,6 +315,19 @@ CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hours.
 CELERY_ENABLE_UTC = False
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_IMPORTS += ('exchange.tasks',)
+
+# audit settings
+AUDIT_ENABLED = str2bool(os.getenv('AUDIT_ENABLED', 'True'))
+if AUDIT_ENABLED:
+    INSTALLED_APPS = INSTALLED_APPS + (
+        'exchange.audit',
+    )
+
+    AUDIT_TO_FILE = str2bool(os.getenv('AUDIT_TO_FILE', 'False'))
+    AUDIT_LOGFILE_LOCATION = os.getenv(
+        'AUDIT_LOGFILE_LOCATION',
+        os.path.join(LOCAL_ROOT, 'exchange_audit_log.json')
+    )
 
 # Logging settings
 # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
@@ -384,6 +396,7 @@ if GEOAXIS_ENABLED:
 REGISTRY = os.environ.get('ENABLE_REGISTRY', False)
 REGISTRYURL = os.environ.get('REGISTRYURL', None)
 REGISTRY_CAT = os.environ.get('REGISTRY_CAT', 'registry')
+REGISTRY_LOCAL_URL = os.environ.get('REGISTRY_LOCAL_URL', 'http://localhost:8001')
 
 # If django-osgeo-importer is enabled, give it the settings it needs...
 if 'osgeo_importer' in INSTALLED_APPS:
@@ -496,3 +509,12 @@ if ENABLE_SOCIAL_LOGIN:
         AUTHENTICATION_BACKENDS += (
             'exchange.auth.backends.geoaxis.GeoAxisOAuth2',
         )
+
+# MapLoom search options
+NOMINATIM_URL = os.environ.get('NOMINATIM_URL', '//nominatim.openstreetmap.org')
+GEOQUERY_ENABLED = os.environ.get('GEOQUERY_ENABLED', False)
+GEOQUERY_URL = os.environ.get('GEOQUERY_URL', None)
+if GEOQUERY_ENABLED:
+    NOMINATIM_ENABLED = False
+else:
+    NOMINATIM_ENABLED = True
