@@ -21,7 +21,7 @@
 import os
 import dj_database_url
 import copy
-import django
+from ast import literal_eval as le
 from geonode.settings import *  # noqa
 from geonode.settings import (
     MIDDLEWARE_CLASSES,
@@ -67,20 +67,47 @@ CLASSIFICATION_BACKGROUND_COLOR = os.getenv(
 )
 CLASSIFICATION_LINK = os.getenv('CLASSIFICATION_LINK', None)
 
+# login warning
+LOGIN_WARNING_ENABLED = str2bool(os.getenv('LOGIN_WARNING_ENABLED', 'False'))
+
+if LOGIN_WARNING_ENABLED:
+    LOGIN_WARNING_TEXT = os.getenv('LOGIN_WARNING_TEXT', '''<p>You are accessing a U.S. Government (USG)
+        Information System (IS) that is provided
+        for USG-authorized use only.  By using this IS (which includes any device attached to this IS), you
+        consent to the following conditions:</p><ul><li>The USG routinely intercepts, and monitors
+        communications on this IS for purposes including, but not limited to, penetration testing,
+        COMSEC monitoring, network operations and defense, personnel misconduct (PM), law enforcement
+        (LE), and counterintelligence (CI) investigations.</li><li>At any time, the USG may inspect
+        and seize data stored on this IS.</li><li>Communications using, or data stored on,
+        this IS are not private, are subject to routine monitoring, interception, and search,
+        and may be disclosed or used for any USG-authorized purpose.</li></ul><p>This IS includes security measures
+        (e.g., authentication and access controls) to protect USG interests -- not for your personal
+        benefit or privacy.  Notwithstanding the above, using this IS does not constitute consent to
+        PM, LE, or CI investigative searching or monitoring of the content of privileged communications,
+        or work product, related to personal representation or services by attorneys, psychotherapists,
+        or clergy, and their assistants.  Such communications and work product are private and
+        confidential.  See User Agreement for details.</p>''')
+
 # registration
 EMAIL_HOST = os.getenv('EMAIL_HOST', None)
-EMAIL_PORT = os.getenv('EMAIL_PORT', None)
+EMAIL_PORT = le(os.getenv('EMAIL_PORT', '25'))
+EMAIL_USE_TLS = str2bool(os.getenv('EMAIL_USE_TLS', 'False'))
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', None)
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', None)
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', None)
 THEME_ACCOUNT_CONTACT_EMAIL = os.getenv('THEME_ACCOUNT_CONTACT_EMAIL', None)
-ACCOUNT_ACTIVATION_DAYS = os.getenv('ACCOUNT_ACTIVATION_DAYS', 7)
+ACCOUNT_ACTIVATION_DAYS = le(os.getenv('ACCOUNT_ACTIVATION_DAYS', '7'))
 
 # path setup
 LOCAL_ROOT = os.path.abspath(os.path.dirname(__file__))
 APP_ROOT = os.path.join(LOCAL_ROOT, os.pardir)
 
 # static files storage
-STATICFILES_DIRS.append(os.path.join(APP_ROOT, "static"),)
+STATICFILES_DIRS = [
+    os.path.join(APP_ROOT, "static"),
+    os.path.join(APP_ROOT, "thumbnails", "static"),
+] + STATICFILES_DIRS
 
 # template settings
 TEMPLATES = [
@@ -125,12 +152,18 @@ if isinstance(ADDITIONAL_APPS, str):
 
 OSGEO_IMPORTER_ENABLED = str2bool(os.getenv('OSGEO_IMPORTER_ENABLED', 'False'))
 GEONODE_CLIENT_ENABLED = str2bool(os.getenv('GEONODE_CLIENT_ENABLED', 'True'))
+STORYSCAPES_ENABLED = str2bool(os.getenv('STORYSCAPES_ENABLED', 'False'))
+
+if STORYSCAPES_ENABLED:
+    RESOURCE_PUBLISHING = True
 
 # installed applications
 INSTALLED_APPS = (
     'flat',
     'exchange.core',
     'exchange.themes',
+    'exchange.fileservice',
+    'exchange.thumbnails',
     'geonode',
     'geonode.contrib.geogig',
     'geonode.contrib.slack',
@@ -138,6 +171,9 @@ INSTALLED_APPS = (
     'maploom',
     'solo',
     'exchange-docs',
+    'exchange.storyscapes',
+    'composer',
+    'social_django',
 ) + ADDITIONAL_APPS + INSTALLED_APPS
 
 if OSGEO_IMPORTER_ENABLED:
@@ -154,6 +190,7 @@ else:
 if GEONODE_CLIENT_ENABLED:
     INSTALLED_APPS = ('geonode-client',) + INSTALLED_APPS
     LAYER_PREVIEW_LIBRARY = 'react'
+         
 
 # authorized exempt urls
 ADDITIONAL_AUTH_EXEMPT_URLS = os.environ.get(
@@ -172,7 +209,7 @@ GEOSERVER_URL = os.environ.get(
     'http://127.0.0.1:8080/geoserver/'
 )
 GEOSERVER_LOCAL_URL = os.environ.get(
-    'GEOSERVER__LOCAL_URL',
+    'GEOSERVER_LOCAL_URL',
     GEOSERVER_URL
 )
 GEOSERVER_USER = os.environ.get(
@@ -219,8 +256,7 @@ OGC_SERVER = {
         'GEOGIG_DATASTORE_DIR': GEOGIG_DATASTORE_DIR,
         'DATASTORE': PG_DATASTORE,
         'PG_GEOGIG': PG_GEOGIG,
-        'TIMEOUT': 10,
-        'LOGOUT_ENDPOINT': 'j_spring_oauth2_geonode_logout'
+        'TIMEOUT': 10
     }
 }
 
@@ -240,7 +276,7 @@ DATABASES['exchange_imports'] = dj_database_url.parse(
 )
 DATABASES['exchange_imports']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
 
-WGS84_MAP_CRS = str2bool(os.environ.get('WGS84_MAP_CRS', False))
+WGS84_MAP_CRS = str2bool(os.environ.get('WGS84_MAP_CRS', 'False'))
 if WGS84_MAP_CRS:
     DEFAULT_MAP_CRS = "EPSG:4326"
 
@@ -263,8 +299,9 @@ ES_ENGINE = os.environ.get(
     'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine'
 )
 HAYSTACK_SEARCH = str2bool(os.getenv('HAYSTACK_SEARCH', 'False'))
-if ES_UNIFIED_SEARCH == True:
+if ES_UNIFIED_SEARCH:
     HAYSTACK_SEARCH = True
+    HAYSTACK_FACET_COUNTS = True
 if HAYSTACK_SEARCH:
     HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
     HAYSTACK_CONNECTIONS = {
@@ -293,6 +330,19 @@ CELERY_TASK_RESULT_EXPIRES = 18000  # 5 hours.
 CELERY_ENABLE_UTC = False
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_IMPORTS += ('exchange.tasks',)
+
+# audit settings
+AUDIT_ENABLED = str2bool(os.getenv('AUDIT_ENABLED', 'True'))
+if AUDIT_ENABLED:
+    INSTALLED_APPS = INSTALLED_APPS + (
+        'exchange.audit',
+    )
+
+    AUDIT_TO_FILE = str2bool(os.getenv('AUDIT_TO_FILE', 'False'))
+    AUDIT_LOGFILE_LOCATION = os.getenv(
+        'AUDIT_LOGFILE_LOCATION',
+        os.path.join(LOCAL_ROOT, 'exchange_audit_log.json')
+    )
 
 # Logging settings
 # 'DEBUG', 'INFO', 'WARNING', 'ERROR', or 'CRITICAL'
@@ -358,9 +408,28 @@ if GEOAXIS_ENABLED:
 
 
 # NEED TO UPDATE DJANGO_MAPLOOM FOR ONLY THIS ONE VALUE
-REGISTRY = os.environ.get('ENABLE_REGISTRY', False)
+REGISTRY = str2bool(os.environ.get('ENABLE_REGISTRY', 'False'))
 REGISTRYURL = os.environ.get('REGISTRYURL', None)
 REGISTRY_CAT = os.environ.get('REGISTRY_CAT', 'registry')
+REGISTRY_LOCAL_URL = os.environ.get('REGISTRY_LOCAL_URL', 'http://localhost:8001')
+
+# NearSight Options, adding NEARSIGHT_ENABLED to env will enable nearsight.
+NEARSIGHT_ENABLED = str2bool(os.environ.get('NEARSIGHT_ENABLED', 'False'))
+if NEARSIGHT_ENABLED:
+    NEARSIGHT_UPLOAD_PATH = os.getenv('NEARSIGHT_UPLOAD_PATH', '/opt/nearsight/store')
+    NEARSIGHT_LAYER_PREFIX = os.getenv('NEARSIGHT_LAYER_PREFIX', 'nearsight')
+    NEARSIGHT_CATEGORY_NAME = os.getenv('NEARSIGHT_CATEGORY_NAME', 'NearSight')
+    NEARSIGHT_GEONODE_RESTRICTIONS = os.getenv('NEARSIGHT_GEONODE_RESTRICTIONS', 'NearSight Data')
+    DATABASES['nearsight'] = DATABASES['exchange_imports']
+    CACHES = locals().get('CACHES', {})
+    CACHES['nearsight'] = CACHES.get('nearsight', {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': NEARSIGHT_UPLOAD_PATH,
+    })
+    CACHES['default'] = CACHES.get('default', CACHES.get('nearsight'))
+    NEARSIGHT_SERVICE_UPDATE_INTERVAL = le(os.getenv('NEARSIGHT_SERVICE_UPDATE_INTERVAL', '5'))
+    SSL_VERIFY = str2bool(os.getenv('SSL_VERIFY', 'False'))
+    INSTALLED_APPS += ('nearsight',)
 
 # If django-osgeo-importer is enabled, give it the settings it needs...
 if 'osgeo_importer' in INSTALLED_APPS:
@@ -393,6 +462,11 @@ if 'osgeo_importer' in INSTALLED_APPS:
         'data/'
     )
 
+FILESERVICE_CONFIG = {
+    'store_dir': os.getenv('FILESERVICE_MEDIA_ROOT', os.path.join(MEDIA_ROOT, 'fileservice')),
+    'types_allowed': ['.jpg', '.jpeg', '.png'],
+    'streaming_supported': False
+}
 
 try:
     from local_settings import *  # noqa
@@ -410,8 +484,8 @@ SESSION_COOKIE_AGE = 60 * 60 * 24
 
 # Set default access to layers to all, user will need to deselect the checkbox
 # manually
-DEFAULT_ANONYMOUS_VIEW_PERMISSION = True
-DEFAULT_ANONYMOUS_DOWNLOAD_PERMISSION = True
+DEFAULT_ANONYMOUS_VIEW_PERMISSION = str2bool(os.getenv('DEFAULT_ANONYMOUS_VIEW_PERMISSION', 'True'))
+DEFAULT_ANONYMOUS_DOWNLOAD_PERMISSION = str2bool(os.getenv('DEFAULT_ANONYMOUS_DOWNLOAD_PERMISSION', 'True'))
 
 ENABLE_SOCIAL_LOGIN = str2bool(os.getenv('ENABLE_SOCIAL_LOGIN', 'False'))
 
@@ -421,13 +495,13 @@ if SITEURL.startswith('https'):
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 if ENABLE_SOCIAL_LOGIN:
-    INSTALLED_APPS = ('social_django',) + INSTALLED_APPS
     SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
 
     AUTHENTICATION_BACKENDS += (
         'social_core.backends.google.GoogleOpenId',
         'social_core.backends.google.GoogleOAuth2',
         'social_core.backends.facebook.FacebookOAuth2',
+        'exchange.auth.backends.auth0.AuthZeroOAuth2',
     )
 
     DEFAULT_AUTH_PIPELINE = (
@@ -444,9 +518,27 @@ if ENABLE_SOCIAL_LOGIN:
         'social_core.pipeline.user.user_details'
     )
 
+    SOCIAL_AUTH_AUTH0_KEY = os.environ.get('OAUTH_AUTH0_KEY', None)
+    SOCIAL_AUTH_AUTH0_SECRET = os.environ.get('OAUTH_AUTH0_SECRET', None)
+    SOCIAL_AUTH_AUTH0_HOST = os.environ.get('OAUTH_AUTH0_HOST', None)
+    ENABLE_AUTH0_LOGIN = isValid(SOCIAL_AUTH_AUTH0_KEY)
+    AUTH0_APP_NAME = os.environ.get('AUTH0_APP_NAME', 'Connect')
+    OAUTH_AUTH0_ADMIN_ROLES = os.environ.get(
+        'OAUTH_AUTH0_ADMIN_ROLES', 
+        ""
+    )
+    OAUTH_AUTH0_ALLOWED_ROLES = os.environ.get(
+        'OAUTH_AUTH0_ALLOWED_ROLES', 
+        ""
+    )
+
+    if OAUTH_AUTH0_ADMIN_ROLES.strip():
+        AUTH0_ADMIN_ROLES = map(str.strip, OAUTH_AUTH0_ADMIN_ROLES.split(','))
+    if OAUTH_AUTH0_ALLOWED_ROLES.strip():
+        AUTH0_ALLOWED_ROLES = map(str.strip, OAUTH_AUTH0_ALLOWED_ROLES.split(','))
+
     SOCIAL_AUTH_FACEBOOK_KEY = os.environ.get('OAUTH_FACEBOOK_KEY', None)
     SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('OAUTH_FACEBOOK_SECRET', None)
-
     OAUTH_FACEBOOK_SCOPES = os.environ.get('OAUTH_FACEBOOK_SCOPES', 'email')
     SOCIAL_AUTH_FACEBOOK_SCOPE = map(str.strip, OAUTH_FACEBOOK_SCOPES.split(','))
     SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
@@ -461,9 +553,24 @@ if ENABLE_SOCIAL_LOGIN:
     SOCIAL_AUTH_GEOAXIS_KEY = os.environ.get('OAUTH_GEOAXIS_KEY', None)
     SOCIAL_AUTH_GEOAXIS_SECRET = os.environ.get('OAUTH_GEOAXIS_SECRET', None)
     SOCIAL_AUTH_GEOAXIS_HOST = os.environ.get('OAUTH_GEOAXIS_HOST', None)
+    OAUTH_GEOAXIS_USER_FIELDS = os.environ.get('OAUTH_GEOAXIS_USER_FIELDS', 'username, email, last_name, first_name')
+    SOCIAL_AUTH_GEOAXIS_USER_FIELDS = map(str.strip, OAUTH_GEOAXIS_USER_FIELDS.split(','))
+    OAUTH_GEOAXIS_SCOPES = os.environ.get('OAUTH_GEOAXIS_SCOPES', 'UserProfile.me')
+    SOCIAL_AUTH_GEOAXIS_SCOPE = map(str.strip, OAUTH_GEOAXIS_SCOPES.split(','))
     ENABLE_GEOAXIS_LOGIN = isValid(SOCIAL_AUTH_GEOAXIS_KEY)
+    if SITEURL.startswith('https'):
+        SOCIAL_AUTH_REDIRECT_IS_HTTPS = True
     # GeoAxisOAuth2 will cause all login attempt to fail if SOCIAL_AUTH_GEOAXIS_HOST is None
     if ENABLE_GEOAXIS_LOGIN:
         AUTHENTICATION_BACKENDS += (
             'exchange.auth.backends.geoaxis.GeoAxisOAuth2',
         )
+
+# MapLoom search options
+NOMINATIM_URL = os.environ.get('NOMINATIM_URL', '//nominatim.openstreetmap.org')
+GEOQUERY_ENABLED = str2bool(os.environ.get('GEOQUERY_ENABLED', 'False'))
+GEOQUERY_URL = os.environ.get('GEOQUERY_URL', None)
+if GEOQUERY_ENABLED:
+    NOMINATIM_ENABLED = False
+else:
+    NOMINATIM_ENABLED = True
