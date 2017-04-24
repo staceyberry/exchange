@@ -1,9 +1,10 @@
-.navbar-nav .dropdown-menu .divider {
-    background-color: #384056;
+html,
+body {
+  height: 100%;
 }
 
-body {
-    padding-top: 50px;
+.navbar-nav .dropdown-menu .divider {
+    background-color: #384056;
 }
 
 .navbar-inverse .navbar-nav > li > a {
@@ -54,6 +55,7 @@ a.navbar-brand {
     float: right;
 }
 
+
 .dropdown-toggle .fa-caret-down {
     font-size: 12px;
     margin-left: 3px;
@@ -74,6 +76,17 @@ a.navbar-brand {
 .navbar-inverse .navbar-nav > .open > a {
     background-color: transparent !important;
     color: white !important;
+}
+
+#wrap {
+  height: auto !important;
+  height: 100%;
+  padding: 10px 0 60px;
+  margin-bottom: -70px;
+  min-height: 100%;
+  background: #E6E9ED;
+  /*background: url('/static/geonode/img/888k.jpg');
+ *   background-size: cover;*/
 }
 
 .shim, .footer {
@@ -234,4 +247,32 @@ h1, h2, h3, h4, h5, h6 {
 
 #datasets{
     background: url("/static/img/texture.png");
+}
+
+#nav_layers{
+display:none;
+}
+
+#nav_documents{
+display:none;
+}
+
+#nav_people{
+display:none;
+}
+
+#nav_groups{
+display:none;
+}
+
+#nav_maps{
+display:none;
+}
+
+#search{
+display:none;
+}
+
+#about{
+display:none;
 }
