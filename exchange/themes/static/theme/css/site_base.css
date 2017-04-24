@@ -22,14 +22,13 @@ body {
 
 a.navbar-brand {
     height: 45px;
-    background-size: 65%;
+    background-size: 45%;
 }
 
 .navbar-inverse, .modal-header {
-    background: #262c3a;
-    background: linear-gradient(107deg, #262c3a 8%, #29648e 140%);
+    background: #000000;
+    //background: linear-gradient(107deg, #262c3a 8%, #29648e 140%);
 }
-
 
 .navbar-nav .dropdown-menu {
     background-color: #262c3a !important;
