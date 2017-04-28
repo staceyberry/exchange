@@ -9,12 +9,17 @@ from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 from django.core.serializers import serialize
-from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord
+from django.forms.models import model_to_dict
+from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, StoryForm, Story
 from geonode.base.models import TopicCategory
 from exchange.tasks import create_new_csw
 from geonode.maps.views import _resolve_map
 import requests
 import logging
+import base64
+import uuid
+from django.core.files.base import ContentFile
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +27,43 @@ logger = logging.getLogger(__name__)
 def home_screen(request):
     categories = TopicCategory.objects.filter(is_choice=True).order_by('pk')
     return render(request, 'index.html', {'categories': categories})
+
+
+def story(request):
+    if request.method == 'POST':
+        try:
+            record = Story.objects.get(map_id=request.POST['map_id'])
+            record.footer = request.POST['footer']
+            record.selected_feature = request.POST['selected_feature']
+            record.save()
+            if 'icon' in request.POST and request.POST['icon'] is not None:
+                filename = uuid.uuid4().hex + '.png'
+                image_data = base64.b64decode(request.POST['icon'])
+                icon = ContentFile(image_data, filename)
+                record.icon.save(filename, icon)
+            return JsonResponse({'success': True})
+        except Story.DoesNotExist:
+            form = StoryForm(request.POST)
+            if form.is_valid():
+                form.save()
+                record = Story.objects.get(map_id=request.POST['map_id'])
+                if 'icon' in request.POST and request.POST['icon'] is not None:
+                    filename = uuid.uuid4().hex + '.png'
+                    image_data = base64.b64decode(request.POST['icon'])
+                    icon = ContentFile(image_data, filename)
+                    record.icon.save(filename, icon)
+                return JsonResponse({'success': True})
+            return HttpResponse(form.errors.as_json(), content_type="application/json")
+    else:
+        record = Story.objects.get(map_id=request.GET['map_id'])
+        icon_url = None
+        if record.icon:
+            icon_url = record.icon.url
+        return JsonResponse({
+            'map_id': record.map_id,
+            'footer': record.footer,
+            'selected_feature': record.selected_feature,
+            'icon': icon_url})
 
 
 def documentation_page(request):

@@ -32,6 +32,19 @@ import uuid
 import datetime
 
 
+class Story(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    map_id = models.IntegerField()
+    footer = models.CharField(max_length=128, blank=True)
+    selected_feature = models.CharField(max_length=128, blank=True)
+    icon = models.ImageField(upload_to='mapIcon', blank=True, null=True)
+
+
+class StoryForm(forms.ModelForm):
+    class Meta:
+        model = Story
+        fields = ('map_id', 'footer', 'selected_feature', 'icon')
+
 class ThumbnailImage(SingletonModel):
     thumbnail_image = models.ImageField(
         upload_to=os.path.join(settings.MEDIA_ROOT, 'thumbs'),
