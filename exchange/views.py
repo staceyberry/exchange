@@ -10,8 +10,7 @@ from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
 from django.core.serializers import serialize
 from django.contrib.admin.views.decorators import staff_member_required
-from django.forms.models import model_to_dict
-from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecordForm, CSWRecord, StoryForm, Story
+from exchange.core.models import CSWRecordForm, CSWRecord, StoryForm, Story
 from geonode.base.models import TopicCategory
 from exchange.tasks import create_new_csw, load_service_layers
 from geonode.maps.views import _resolve_map

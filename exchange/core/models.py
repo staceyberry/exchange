@@ -37,7 +37,7 @@ class Story(models.Model):
     map_id = models.IntegerField()
     footer = models.CharField(max_length=128, blank=True)
     selected_feature = models.CharField(max_length=128, blank=True)
-    icon = models.ImageField(upload_to='mapIcon', blank=True, null=True)
+    icon = models.ImageField(upload_to=os.path.join(settings.MEDIA_ROOT, 'icons'), blank=True, null=True)
 
 
 class StoryForm(forms.ModelForm):
