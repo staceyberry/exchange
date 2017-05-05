@@ -1,0 +1,92 @@
+.maploom-body #map, iframe.maploom {
+    position: absolute;
+    left: 200px;
+    top: 104px;
+    height: calc(100% - 164px);
+    min-height: calc(100% - 164px);
+    width: calc(100% - 200px);
+    min-width: calc(100% - 200px);
+}
+
+/*
+.maploom-body.modal-open > .modal .modal-dialog{
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+*/
+
+#map-header {
+    position: absolute;
+    top: 52px;
+    left: 0px;
+    right: 0px;
+    height: 52px;
+    background-color: white;
+}
+
+#map-header .map-icon {
+    width: 70px;
+    height: 45px;
+    display: inline-block;
+}
+#map-header .map-icon #logo {
+    vertical-align: baseline;
+    max-height:100%;
+    max-width: 100%;
+    min-width: 70px;
+    min-height: 45px;
+}
+#logo-upload {
+    display: none;
+}
+#map-header .header-text {
+    display: inline-block;
+    margin-left: 45px;
+}
+#map-header .header-text .title {
+    font-size:16px;
+    height: 20px;
+    width: 100%;
+}
+#map-header .header-text .description {
+    font-size:12px;
+    height: 20px;
+    width: 100%;
+}
+
+
+#sidebar {
+    position: absolute;
+    left: 0px;
+    top: 104px;
+    bottom: 60px;
+    width: 200px;
+    height: calc(100% - 112px);
+    min-height: calc(100% - 112px);
+    background-color: white;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+#sidebar  .feature-panel {
+    min-height: 200px;
+}
+
+#footer {
+    position: fixed;
+    bottom: 0px;
+    height: 60px;
+    left: 0px;
+    right: 0px;
+    background-color: white;
+}
+#footer .footer-text {
+    margin-left: 15px;
+    min-width: 80px;
+    display: inline-block;
+    border-style: dashed;
+    border-width: thin;
+}

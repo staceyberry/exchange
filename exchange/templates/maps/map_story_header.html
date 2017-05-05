@@ -1,0 +1,26 @@
+{% if preview == 'maploom' %}
+    <div id="map-header">
+        <div class="map-icon">
+            <img id="logo" />
+            <input type="file" id="logo-upload" accept="image/*"/>
+        </div>
+        <div class="header-text">
+            <div class="title ellipsis">{{ map.title }}</div>
+            <div class="description ellipsis">{{ map.abstract }}</div>
+        </div>
+    </div>
+
+
+    <div id="sidebar">
+        <div class="panel panel-default" style="margin-bottom: 15px;">
+            <div class="panel-body">
+                <img src="http://placehold.it/150x100"/>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-body feature-panel">
+                <div loom-story-feature></div>
+            </div>
+        </div>
+    </div>
+{% endif %}
