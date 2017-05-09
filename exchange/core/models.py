@@ -38,7 +38,7 @@ class Story(models.Model):
     footer = models.CharField(max_length=128, blank=True)
     selected_feature = models.CharField(max_length=128, blank=True)
     icon = models.ImageField(upload_to='icons', blank=True, null=True)
-    template = models.CharField(max_length=128, blank=True)
+    template = models.CharField(max_length=128, blank=True, null=True)
 
 
 class StoryForm(forms.ModelForm):
