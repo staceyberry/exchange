@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='Story',
             name='template',
-            field=models.CharField(max_length=128, blank=True)
+            field=models.CharField(max_length=128, blank=True, null=True)
         ),
     ]
