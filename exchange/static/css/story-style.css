@@ -1,24 +1,11 @@
 .maploom-body #map, iframe.maploom {
+    height: calc(100% - 52px);
+    width: 100%;
     position: absolute;
-    left: 200px;
-    top: 104px;
-    height: calc(100% - 164px);
-    min-height: calc(100% - 164px);
-    width: calc(100% - 200px);
-    min-width: calc(100% - 200px);
 }
-
-/*
-.maploom-body.modal-open > .modal .modal-dialog{
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-}
-*/
 
 #map-header {
+    display: none;
     position: absolute;
     top: 52px;
     left: 0px;
@@ -59,6 +46,7 @@
 
 
 #sidebar {
+    display: none;
     position: absolute;
     left: 0px;
     top: 104px;
@@ -76,6 +64,7 @@
 }
 
 #footer {
+    display: none;
     position: fixed;
     bottom: 0px;
     height: 60px;
@@ -89,4 +78,19 @@
     display: inline-block;
     border-style: dashed;
     border-width: thin;
+}
+
+
+#template-selector .row .template-item{
+    cursor: pointer;
+    border: ridge thin;
+    padding: 5px;
+}
+#template-selector .row .template-item img{
+    width: 100%;
+}
+#template-selector .row .template-item span{
+    display: inline-block;
+    width: 100%;
+    text-align: center;
 }

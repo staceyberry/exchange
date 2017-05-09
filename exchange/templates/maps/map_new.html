@@ -26,6 +26,7 @@
 
 {% block body_outer %}
     {% include 'maps/map_story_header.html' %}
+    {% include 'maps/map_template_selector.html' %}
 {% endblock %}
 
 {% block footer %}
@@ -33,6 +34,9 @@
 {% endblock %}
 
 {% block extra_script %}
+    <script>
+        renderer = '{{ preview }}';
+    </script>
     <script type="text/javascript" src="{{STATIC_URL}}js/story.js">
     </script>
 {% endblock %}

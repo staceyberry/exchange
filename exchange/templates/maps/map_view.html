@@ -31,6 +31,7 @@
 {% block extra_script %}
     <script>
         map_id = {{ map.id }};
+        renderer = '{{ preview }}';
     </script>
     <script type="text/javascript" src="{{STATIC_URL}}js/story.js">
     </script>

@@ -55,15 +55,19 @@ def story(request):
                 return JsonResponse({'success': True})
             return HttpResponse(form.errors.as_json(), content_type="application/json")
     else:
-        record = Story.objects.get(map_id=request.GET['map_id'])
-        icon_url = None
-        if record.icon:
-            icon_url = record.icon.url
-        return JsonResponse({
-            'map_id': record.map_id,
-            'footer': record.footer,
-            'selected_feature': record.selected_feature,
-            'icon': icon_url})
+        try:
+            record = Story.objects.get(map_id=request.GET['map_id'])
+            icon_url = None
+            if record.icon:
+                icon_url = record.icon.url
+            return JsonResponse({
+                'map_id': record.map_id,
+                'footer': record.footer,
+                'selected_feature': record.selected_feature,
+                'template': record.template,
+                'icon': icon_url})
+        except Story.DoesNotExist:
+            return JsonResponse({'error': 'story not found'}, status=404)
 
 
 def documentation_page(request):
