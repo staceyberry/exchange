@@ -94,3 +94,19 @@
     width: 100%;
     text-align: center;
 }
+
+#sidebar .carousel-parent {
+    margin-bottom: 15px;
+    background-color: #dedede;
+}
+
+#sidebar-carousel {
+    margin-left: 10px;
+    margin-right: 10px;
+    width: 150px;
+    height: 150px;
+}
+#sidebar-carousel img {
+    height: 100%;
+    width: 100%;
+}

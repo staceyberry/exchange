@@ -1,5 +1,12 @@
 if (window.renderer === 'maploom') {
 
+
+    function isMediaPropertyName(name) {
+      var lower = name.toLowerCase();
+      return lower.indexOf('fotos') === 0 || lower.indexOf('photos') === 0 ||
+          lower.indexOf('audios') === 0 || lower.indexOf('videos') === 0;
+    }
+
     function setPositionAndSize(config) {
         var navbarHeight = $('.navbar-fixed-top').height();
         var header = $('#map-header');
@@ -34,6 +41,17 @@ if (window.renderer === 'maploom') {
         mapFrame.css('width', 'calc(100% - ' + adjustedWidth + 'px)');
         mapFrame.css('height', 'calc(100% - ' + adjustedHeight + 'px)');
         mapFrame.css('position', 'absolute');
+
+        $('#sidebar-carousel').slick(
+            {
+                dots: true,
+                infinite: true,
+                autoplay: true,
+                speed: 500,
+                fade: true,
+                cssEase: 'linear'
+            }
+        );
     }
 
     function updateFeature(featureID){
@@ -42,13 +60,36 @@ if (window.renderer === 'maploom') {
                 try {
                     var featureProperties = data.features[0].properties;
                     var table = $('#feature-table');
+                    var media = [];
                     table.empty();
                     $.each(featureProperties, function(key, value) {
-                        var row = $('<tr>' +
-                            '<td>' + key + '</td>' +
-                            '<td>' + value + '</td>' +
-                            '</tr>');
-                        row.appendTo(table);
+                        if (isMediaPropertyName(key)) {
+                            var jsonValue;
+                            try {
+                                jsonValue = JSON.parse(value);
+                            } catch (e) {
+                                jsonValue = '\"' + value + '\"';
+                            }
+                            if ($.isArray(jsonValue)){
+                                for(var i = 0; i < jsonValue.length; ++i){
+                                    media.push(jsonValue[i]);
+                                }
+                            } else {
+                                media.push(jsonValue);
+                            }
+                        } else {
+                            var row = $('<tr>' +
+                                '<td>' + key + '</td>' +
+                                '<td>' + value + '</td>' +
+                                '</tr>');
+                            row.appendTo(table);
+                        }
+                    });
+                    var carousel = $('#sidebar-carousel');
+                    carousel.slick('removeSlide', null, null, true);
+                    $.each(media, function(key, val){
+                       var img = '<div><img src="' + val + '"/></div>';
+                       carousel.slick('slickAdd',img);
                     });
                 } catch (e) {
                     //Exception is thrown when feature doesn't exist in the wfs endpoint
@@ -82,9 +123,9 @@ if (window.renderer === 'maploom') {
     });
 
     $('body').bind('featureSelected',function(e, featureID) {
-        console.log('feature selected', featureID);
         updateFeature(featureID);
     });
+
 
     if (window.map_id) {
         $.get('/storyPersist?map_id=' + window.map_id, function(data){

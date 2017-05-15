@@ -33,6 +33,9 @@
         map_id = {{ map.id }};
         renderer = '{{ preview }}';
     </script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/story.js">
-    </script>
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick-theme.css"/>
+    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick.min.js"></script>
+
+    <script type="text/javascript" src="{{STATIC_URL}}js/story.js"></script>
 {% endblock %}
