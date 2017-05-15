@@ -68,20 +68,24 @@ if (window.renderer === 'maploom') {
                             try {
                                 jsonValue = JSON.parse(value);
                             } catch (e) {
-                                jsonValue = '\"' + value + '\"';
+                                if (typeof value === 'string' && value === ''){
+                                    jsonValue = undefined;
+                                } else {
+                                    jsonValue = '\"' + value + '\"';
+                                }
                             }
                             if ($.isArray(jsonValue)){
                                 for(var i = 0; i < jsonValue.length; ++i){
                                     media.push(jsonValue[i]);
                                 }
-                            } else {
+                            } else if (jsonValue !== undefined) {
                                 media.push(jsonValue);
                             }
                         } else {
-                            var row = $('<tr>' +
-                                '<td>' + key + '</td>' +
-                                '<td>' + value + '</td>' +
-                                '</tr>');
+                            var row = $('<div class="row" style="padding: 0px;">' +
+                                '<div class="col-md-6" style="padding: 0px;">' + key + '</div>' +
+                                '<div class="col-md-6" style="padding: 0px;">' + value + '</div>' +
+                                '</div>');
                             row.appendTo(table);
                         }
                     });
