@@ -52,8 +52,8 @@
     top: 104px;
     bottom: 60px;
     width: 200px;
-    height: calc(100% - 112px);
-    min-height: calc(100% - 112px);
+    height: calc(100% - 164px);
+    min-height: calc(100% - 164px);
     background-color: white;
     overflow-y: auto;
     overflow-x: auto;
