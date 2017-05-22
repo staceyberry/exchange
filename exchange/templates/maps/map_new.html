@@ -37,12 +37,12 @@
     <script>
         renderer = '{{ preview }}';
     </script>
-    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.css"/>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}vendor/jquery-ui/themes/base/all.css"/>
+    <script type="text/javascript" src="{{STATIC_URL}}vendor/jquery-ui/jquery-ui.min.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick.css"/>
-    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick-theme.css"/>
-    <script type="text/javascript" src="//cdn.jsdelivr.net/jquery.slick/1.6.0/slick.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}vendor/slick-carousel/slick/slick.css"/>
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}vendor/slick-carousel/slick/slick-theme.css"/>
+    <script type="text/javascript" src="{{STATIC_URL}}vendor/slick-carousel/slick/slick.min.js"></script>
 
     <script type="text/javascript" src="{{STATIC_URL}}js/story.js"></script>
 {% endblock %}
