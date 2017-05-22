@@ -39,7 +39,7 @@ class Story(models.Model):
     selected_feature = models.CharField(max_length=128, blank=True)
     icon = models.ImageField(upload_to='icons', blank=True, null=True)
     template = models.CharField(max_length=128, blank=True, null=True)
-    positions = models.CharField(max_length=256, blank=True, null=True)
+    positions = models.CharField(max_length=128, blank=True, null=True)
 
 
 class StoryForm(forms.ModelForm):
