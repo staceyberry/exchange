@@ -76,6 +76,8 @@
     margin-left: 15px;
     min-width: 80px;
     display: inline-block;
+}
+#footer .footer-text[contenteditable] {
     border-style: dashed;
     border-width: thin;
 }
@@ -101,10 +103,9 @@
 }
 
 #sidebar-carousel {
+    width: calc(100% - 30px);
     margin-left: 10px;
-    margin-right: 10px;
-    width: 150px;
-    height: 150px;
+    height: 100%;
 }
 #sidebar-carousel img {
     height: 100%;
@@ -117,4 +118,22 @@
 
 #feature-table .row:nth-child(odd) {
     background-color: #efefef;
+}
+
+#map-header.non-editable #logo-placeholder:hover {
+    color: #333333;
+}
+
+body.editable #sidebar {
+    border-right: white dashed;
+}
+body.editable #map-header {
+    border-bottom: black dashed;
+}
+body.editable #footer {
+    border-top: black dashed;
+}
+
+body.editable .map-icon {
+    border: black dashed;
 }

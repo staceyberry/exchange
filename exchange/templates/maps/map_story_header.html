@@ -1,12 +1,16 @@
 {% if preview == 'maploom' %}
     <div id="map-header">
-        <div class="map-icon">
-            <img id="logo" />
+        <div class="map-icon" style="text-align: center;">
+            <img id="logo" style="display: none;" />
+            <i class="fa fa-picture-o" id="logo-placeholder" aria-hidden="true" style="font-size:45px;"></i>
             <input type="file" id="logo-upload" accept="image/*"/>
         </div>
         <div class="header-text">
             <div class="title ellipsis">{{ map.title }}</div>
             <div class="description ellipsis">{{ map.abstract }}</div>
+        </div>
+        <div class="edit-toggle" style="position: fixed; right: 0px; top: 55px;">
+            <button class="btn" id="edit-template-btn"> <span class="fa fa-pencil"></span> </button>
         </div>
     </div>
 

@@ -39,12 +39,13 @@ class Story(models.Model):
     selected_feature = models.CharField(max_length=128, blank=True)
     icon = models.ImageField(upload_to='icons', blank=True, null=True)
     template = models.CharField(max_length=128, blank=True, null=True)
+    positions = models.CharField(max_length=256, blank=True, null=True)
 
 
 class StoryForm(forms.ModelForm):
     class Meta:
         model = Story
-        fields = ('map_id', 'footer', 'selected_feature', 'icon', 'template')
+        fields = ('map_id', 'footer', 'selected_feature', 'icon', 'template', 'positions')
 
 class ThumbnailImage(SingletonModel):
     thumbnail_image = models.ImageField(

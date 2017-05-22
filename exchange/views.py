@@ -35,6 +35,7 @@ def story(request):
             record = Story.objects.get(map_id=request.POST['map_id'])
             record.footer = request.POST['footer']
             record.selected_feature = request.POST['selected_feature']
+            record.positions = request.POST['positions']
             record.save()
             if 'icon' in request.POST and request.POST['icon'] is not None:
                 filename = uuid.uuid4().hex + '.png'
@@ -65,6 +66,7 @@ def story(request):
                 'footer': record.footer,
                 'selected_feature': record.selected_feature,
                 'template': record.template,
+                'positions': record.positions,
                 'icon': icon_url})
         except Story.DoesNotExist:
             return JsonResponse({'error': 'story not found'}, status=404)
