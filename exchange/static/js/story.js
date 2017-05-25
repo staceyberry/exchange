@@ -361,7 +361,7 @@
                 }
                 $('#footer').children()[0].innerText = data.footer;
                 window.template = data.template;
-                if (data.template === 'plain') {
+                if (data.template === 'plain' || data.template === 'time-slider') {
                     if (data.positions && data.positions !== '') {
                         setPositionAndSize(JSON.parse(data.positions), false);
                     } else {
@@ -378,6 +378,12 @@
             $('#plain-template').on('click', function () {
                 window.template = 'plain';
                 setPositionAndSize(plainTemplateObject, true);
+                $('iframe.maploom')[0].contentWindow.$('body').triggerHandler('set-time-slider', [false]);
+            });
+            $('#time-slider-template').on('click', function () {
+                window.template = 'time-slider';
+                setPositionAndSize(plainTemplateObject, true);
+                $('iframe.maploom')[0].contentWindow.$('body').triggerHandler('set-time-slider', [true]);
             });
         }
     }
