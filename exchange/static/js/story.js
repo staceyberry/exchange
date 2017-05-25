@@ -1,8 +1,9 @@
 (function () {
 
     if (window.renderer === 'maploom') {
-        var currentFeature = undefined;
-        var csrfToken;
+        var currentFeature,
+        currentLayer,
+        csrfToken;
 
 
         var csrfRegex = new RegExp('csrftoken=([^;]+)');
@@ -238,7 +239,7 @@
                 var params = {
                     'map_id': id,
                     'footer': $('.footer-text').text().trim(),
-                    'selected_feature': currentFeature,
+                    'selected_feature': JSON.stringify({featureID : currentFeature, layerID: currentLayer}),
                     'template': window.template,
                     'positions': JSON.stringify(getPositions())
                 };
@@ -267,52 +268,108 @@
             }
         }
 
-        function updateFeature(featureID) {
+        function updateFeature(featureID, layerID) {
             currentFeature = featureID;
-            $.get('/geoserver/wfs?service=wfs&version=2.0.0&request=GetFeature&outputFormat=json&featureID=' + featureID,
+            currentLayer = layerID;
+
+            var ajaxCalls = [];
+
+            ajaxCalls.push($.get('/geoserver/wfs?service=wfs&version=2.0.0&request=GetFeature&outputFormat=json&featureID=' + featureID,
                 function (data) {
                     try {
-                        var featureProperties = data.features[0].properties;
-                        var table = $('#feature-table');
-                        var media = [];
-                        table.empty();
-                        $.each(featureProperties, function (key, value) {
-                            if (isMediaPropertyName(key)) {
-                                var jsonValue;
-                                try {
-                                    jsonValue = JSON.parse(value);
-                                } catch (e) {
-                                    if (typeof value === 'string' && value === '') {
-                                        jsonValue = undefined;
-                                    } else {
-                                        jsonValue = '\"' + value + '\"';
-                                    }
-                                }
-                                if ($.isArray(jsonValue)) {
-                                    for (var i = 0; i < jsonValue.length; ++i) {
-                                        media.push(jsonValue[i]);
-                                    }
-                                } else if (jsonValue !== undefined) {
-                                    media.push(jsonValue);
-                                }
-                            } else {
-                                var row = $('<div class="row" style="padding: 0px;">' +
-                                    '<div class="col-md-6" style="padding: 0px;">' + key + '</div>' +
-                                    '<div class="col-md-6" style="padding: 0px;">' + value + '</div>' +
-                                    '</div>');
-                                row.appendTo(table);
-                            }
-                        });
-                        var carousel = $('#sidebar-carousel');
-                        carousel.slick('removeSlide', null, null, true);
-                        $.each(media, function (key, val) {
-                            var img = '<div><img src="' + val + '"/></div>';
-                            carousel.slick('slickAdd', img);
-                        });
+                        return data.features[0].properties;
                     } catch (e) {
                         //Exception is thrown when feature doesn't exist in the wfs endpoint
                     }
-                });
+                }));
+
+            if (layerID) {
+                ajaxCalls.push($.ajax({
+                    url: '/layers/' + layerID + '/get',
+                    method: 'GET',
+                    //jquery wouldn't run the success function unless this was set
+                    dataType: 'json',
+                    success: function (data) {
+                        return data;
+                    }
+                }));
+            }
+            $.when.apply(this, ajaxCalls).then(function (featureProp, layerMetadata) {
+                var featureProperties;
+                if ($.isArray(featureProp)) {
+                    featureProperties = featureProp[0].features[0].properties;
+                } else {
+                    featureProperties = featureProp.features[0].properties;
+                }
+                if (layerMetadata && $.isArray(layerMetadata)) {
+                    generateTable(featureProperties, layerMetadata[0]);
+                } else {
+                    generateTable(featureProperties);
+                }
+            });
+        }
+
+        function generateTable(featureProperties, layerMetadata) {
+            var sortedOrder = [];
+            if (layerMetadata) {
+                sortedOrder = layerMetadata.attributes.sort(function (a, b) {
+                    return a.display_order - b.display_order
+                })
+            } else {
+                //If there is no metadata, order doesn't matter
+                sortedOrder = Object.keys(featureProperties);
+            }
+            var table = $('#feature-table');
+            var media = [];
+            table.empty();
+
+            for (var i = 0; i < sortedOrder.length; ++i) {
+                var attrKey;
+                var display = true;
+                var displayKey;
+                if (sortedOrder[i].attribute) {
+                    attrKey = sortedOrder[i].attribute;
+                    display = sortedOrder[i].visible;
+                    displayKey = sortedOrder[i].attribute_label || sortedOrder[i].attribute;
+                } else {
+                    attrKey = sortedOrder[i];
+                    displayKey = attrKey;
+                }
+                var value = featureProperties[attrKey];
+                if (isMediaPropertyName(attrKey)) {
+                    var jsonValue;
+                    try {
+                        jsonValue = JSON.parse(value);
+                    } catch (e) {
+                        if (typeof value === 'string' && value === '') {
+                            jsonValue = undefined;
+                        } else {
+                            jsonValue = '\"' + value + '\"';
+                        }
+                    }
+                    if ($.isArray(jsonValue)) {
+                        for (var k = 0; k < jsonValue.length; ++k) {
+                            media.push(jsonValue[i]);
+                        }
+                    } else if (jsonValue !== undefined) {
+                        media.push(jsonValue);
+                    }
+                }
+                else if (display) {
+                    var row = $('<div class="row" style="padding: 0px;">' +
+                        '<div class="col-md-6" style="padding: 0px;">' + displayKey + '</div>' +
+                        '<div class="col-md-6" style="padding: 0px;">' + value + '</div>' +
+                        '</div>');
+                    row.appendTo(table);
+                }
+            }
+
+            var carousel = $('#sidebar-carousel');
+            carousel.slick('removeSlide', null, null, true);
+            $.each(media, function (key, val) {
+                var img = '<div><img src="' + val + '"/></div>';
+                carousel.slick('slickAdd', img);
+            });
         }
 
         var plainTemplateObject = {
@@ -343,10 +400,10 @@
             };
         });
 
-        $('body').bind('featureSelected', function (e, featureID) {
-            updateFeature(featureID);
+        $(document.body).bind('featureSelected', function (e, featureID, layerID) {
+            updateFeature(featureID, layerID);
         });
-        $('body').bind('saveMap', function (e, mapID) {
+        $(document.body).bind('saveMap', function (e, mapID) {
             persistChanges(mapID);
         });
 
@@ -370,7 +427,14 @@
                 }
 
                 if (data.selected_feature) {
-                    updateFeature(data.selected_feature);
+                    //TODO: Should this just be two separate fields?
+                    try {
+                        var parsedObj = JSON.parse(data.selected_feature);
+                        updateFeature(parsedObj.featureID, parsedObj.layerID);
+                    } catch (e) {
+                        //If caught, selected_feature is just a string, not an object
+                        updateFeature(data.selected_feature);
+                    }
                 }
             });
         } else {
