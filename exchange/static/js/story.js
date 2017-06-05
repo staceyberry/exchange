@@ -349,7 +349,7 @@
                     }
                     if ($.isArray(jsonValue)) {
                         for (var k = 0; k < jsonValue.length; ++k) {
-                            media.push(jsonValue[i]);
+                            media.push(jsonValue[k]);
                         }
                     } else if (jsonValue !== undefined) {
                         media.push(jsonValue);
