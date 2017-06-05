@@ -298,12 +298,12 @@
                 var featureProperties;
                 if ($.isArray(featureProp)) {
                     featureProperties = featureProp[0].features[0].properties;
-                } else {
+                } else if (featureProp.features){
                     featureProperties = featureProp.features[0].properties;
                 }
                 if (layerMetadata && $.isArray(layerMetadata)) {
                     generateTable(featureProperties, layerMetadata[0]);
-                } else {
+                } else if (featureProperties) {
                     generateTable(featureProperties);
                 }
             });
