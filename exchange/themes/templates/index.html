@@ -20,16 +20,23 @@
   <div class="container">
   </div>
 
-  <div class="container">
-    <h1>Search for Content</h1>
-    <div class="search">
-      <form id="search" action="/search/">
-        <a href="#" onclick="$('.search').find('#search').submit();"><span class="fa fa-search fa-2x"></span></a>
-
-        <input id="search_input" type="text" placeholder="Search" class="form-control" name="q"></input>
-
-      </form>
+  <div class="container" style="text-align: center;">
+    <div class="row">
+      <h2>Featured Content</h2>
+      {% verbatim %}
+      <div ng-app="featured">
+        <div ng-repeat="item in featured | limitTo:4">
+          <div class="col-md-3">
+            <a href="{{ item.detail_url }}">
+              <img class="thumbnail" src="/thumbnails{{ item.detail_url }}" />
+            </a>
+            <h5>{{ item.title | limitTo: 20 }}{{item.title.length > 20 ? '...' : ''}}</h5>
+          </div>
+        </div>
+      </div>
+      {% endverbatim %}
     </div>
+    <p><a href="/search/">Explore all Content</a></p>
   </div>
 </div>
 {% endblock %}
@@ -59,24 +66,17 @@
   </div>
 </section>
 
-<section id="showcase" style="display:none">
+<section id="showcase">
   <div class="container">
-    <div class="row">
-      <h2>Featured Content</h2>
-      {% verbatim %}
-      <div ng-app="featured">
-        <div ng-repeat="item in featured | limitTo:4">
-          <div class="col-md-3">
-            <a href="{{ item.detail_url }}">
-              <img class="thumbnail" src="/thumbnails{{ item.detail_url }}" />
-            </a>
-            <h5>{{ item.title | limitTo: 20 }}{{item.title.length > 20 ? '...' : ''}}</h5>
-          </div>
-        </div>
-      </div>
-      {% endverbatim %}
+    <h1>Search for Content</h1>
+    <div class="search">
+      <form id="search" action="/search/">
+        <a href="#" onclick="$('.search').find('#search').submit();"><span class="fa fa-search fa-2x"></span></a>
+
+        <input id="search_input" type="text" placeholder="Search" class="form-control" name="q"></input>
+
+      </form>
     </div>
-    <p><a href="/search/">Explore all Content</a></p>
   </div>
 </section>
 
