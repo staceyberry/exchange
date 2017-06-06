@@ -323,6 +323,10 @@
             var image_media = [];
             var video_media = [];
             table.empty();
+            //TODO: Replace this with user selectable properties
+            if (featureProperties.common_nam) {
+                $('#feature-title').text(featureProperties.common_nam + ' - ' + featureProperties.observatio);
+            }
 
             for (var i = 0; i < sortedOrder.length; ++i) {
                 var attrKey;
@@ -356,7 +360,9 @@
                     }
                     if ($.isArray(jsonValue)) {
                         for (var k = 0; k < jsonValue.length; ++k) {
-                            mediaArray.push(jsonValue[k]);
+                            if (jsonValue[k]) {
+                                mediaArray.push(jsonValue[k]);
+                            }
                         }
                     } else if (jsonValue !== undefined) {
                         mediaArray.push(jsonValue);
