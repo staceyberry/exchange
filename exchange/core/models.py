@@ -75,19 +75,14 @@ class CSWRecord(models.Model):
           related_name="csw_records_created")
 
     category_choices = (
-        ('Air', 'Air (Aero)'),
-        ('Intelligence', 'Intelligence'),
         ('Elevation', 'Elevation'),
+        ('EnvironmentalIssues', 'Environmental Issues'),
         ('HumanGeog', 'Human Geography'),
-        ('Basemaps', 'Basemaps'),
-        ('Space', 'Space'),
-        ('Land', 'Land (Topo)'),
-        ('Targeting', 'Targeting'),
-        ('NamesBoundaries', 'Names & Boundaries'),
-        ('MapsCharts', 'NGA Standard Maps & Charts'),
-        ('Sea', 'Sea (Maritime)'),
-        ('Imagery', 'Imagery/Collections'),
-        ('Geomatics', 'Geodesy/Geodetics Geomatics'),
+        ('Military', 'Military'),
+        ('MiscellaneousFeatures', 'Miscellaneous Features'),
+        ('NaturalFeatures', 'Natural Features'),
+        ('Safety', 'Safety'),
+        ('Transporation', 'Transportation'),
         ('Weather', 'Weather')
     )
 

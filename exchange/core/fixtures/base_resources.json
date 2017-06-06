@@ -5,7 +5,7 @@
 		"fields": {
 			"description": "Air (Aero)",
 			"gn_description": "Air (Aero)",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-fighter-jet",
 			"identifier": "air"
 		}
@@ -15,7 +15,7 @@
 		"fields": {
 			"description": "Intelligence",
 			"gn_description": "Intelligence",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-lightbulb-o",
 			"identifier": "intelligence"
 		}
@@ -45,7 +45,7 @@
 		"fields": {
 			"description": "Basemaps",
 			"gn_description": "Basemaps",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-map",
 			"identifier": "basemaps"
 		}
@@ -55,7 +55,7 @@
 		"fields": {
 			"description": "Space",
 			"gn_description": "Space",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-star",
 			"identifier": "space"
 		}
@@ -65,7 +65,7 @@
 		"fields": {
 			"description": "Land (Topo)",
 			"gn_description": "Land (Topo)",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-map-o",
 			"identifier": "land"
 		}
@@ -75,7 +75,7 @@
 		"fields": {
 			"description": "Targeting",
 			"gn_description": "Targeting",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-bullseye",
 			"identifier": "targeting"
 		}
@@ -85,7 +85,7 @@
 		"fields": {
 			"description": "Names & Boundaries",
 			"gn_description": "Names & Boundaries",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-map-marker",
 			"identifier": "namesboundaries"
 		}
@@ -95,7 +95,7 @@
 		"fields": {
 			"description": "NGA Standard Maps & Charts",
 			"gn_description": "NGA Standard Maps & Charts",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-map",
 			"identifier": "ngamaps"
 		}
@@ -105,7 +105,7 @@
 		"fields": {
 			"description": "Sea (Maritime)",
 			"gn_description": "Sea (Maritime)",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-ship",
 			"identifier": "sea"
 		}
@@ -115,7 +115,7 @@
 		"fields": {
 			"description": "Imagery/Collections",
 			"gn_description": "Imagery/Collections",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-camera",
 			"identifier": "imagery"
 		}
@@ -125,7 +125,7 @@
 		"fields": {
 			"description": "Geodesy/Geodetics Geomatics",
 			"gn_description": "Geodesy/Geodetics Geomatics",
-			"is_choice": true,
+			"is_choice": false,
 			"fa_class": "fa-globe",
 			"identifier": "geodesy"
 		}
@@ -315,7 +315,7 @@
 		"fields": {
 			"description": "means and aids for conveying persons and/or goods. Examples: roads, airports/airstrips, shipping routes, tunnels, nautical charts, vehicle or vessel location, aeronautical charts, railways",
 			"gn_description": "Transportation",
-			"is_choice": false,
+			"is_choice": true,
 			"fa_class": "fa-truck",
 			"identifier": "transportation"
 		}
@@ -3639,6 +3639,61 @@
 			"level": 3,
 			"lft": 58,
 			"tree_id": 90
+		}
+	},
+	{
+		"pk": 1000,
+		"model": "base.topiccategory",
+		"fields": {
+			"description": "Environmental Issues",
+			"gn_description": "Environmental Issues",
+			"is_choice": true,
+			"fa_class": "fa-tree",
+			"identifier": "environmentalIssues"
+		}
+	},
+	{
+		"pk": 1001,
+		"model": "base.topiccategory",
+		"fields": {
+			"description": "Military",
+			"gn_description": "Military",
+			"is_choice": true,
+			"fa_class": "fa-fighter-jet",
+			"identifier": "military"
+		}
+	},
+	{
+		"pk": 1002,
+		"model": "base.topiccategory",
+		"fields": {
+			"description": "Miscellaneous Features",
+			"gn_description": "Miscellaneous Features",
+			"is_choice": true,
+			"fa_class": "fa-question",
+			"identifier": "miscellaneousFeatures"
+		}
+	},
+	{
+		"pk": 1003,
+		"model": "base.topiccategory",
+		"fields": {
+			"description": "Natural Features",
+			"gn_description": "Natural Features",
+			"is_choice": true,
+			"fa_class": "fa-leaf",
+			"identifier": "naturalFeatures"
+		}
+	},
+	{
+		"pk": 1004,
+		"model": "base.topiccategory",
+		"fields": {
+			"description": "Safety",
+			"gn_description": "Safety",
+			"is_choice": true,
+			"fa_class": "fa-exclamation-triangle",
+			"identifier": "safety"
 		}
 	}
 
