@@ -426,6 +426,7 @@
                     }
                 }
 
+                /*
                 if (data.selected_feature) {
                     //TODO: Should this just be two separate fields?
                     try {
@@ -436,6 +437,7 @@
                         updateFeature(data.selected_feature);
                     }
                 }
+                */
             });
         } else {
             $('#template-selector').modal();
