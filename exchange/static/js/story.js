@@ -12,7 +12,7 @@
         function isMediaPropertyName(name) {
             var lower = name.toLowerCase();
             return lower.indexOf('fotos') === 0 || lower.indexOf('photos') === 0 ||
-                lower.indexOf('audios') === 0 || lower.indexOf('videos') === 0;
+                lower.indexOf('videos') === 0;
         }
 
         function setPositionAndSize(config, editModeEnabled) {
@@ -320,7 +320,8 @@
                 sortedOrder = Object.keys(featureProperties);
             }
             var table = $('#feature-table');
-            var media = [];
+            var image_media = [];
+            var video_media = [];
             table.empty();
 
             for (var i = 0; i < sortedOrder.length; ++i) {
@@ -338,6 +339,12 @@
                 var value = featureProperties[attrKey];
                 if (isMediaPropertyName(attrKey)) {
                     var jsonValue;
+                    var mediaArray;
+                    if (attrKey.toLowerCase().indexOf('videos') === 0){
+                        mediaArray = video_media;
+                    } else {
+                        mediaArray = image_media;
+                    }
                     try {
                         jsonValue = JSON.parse(value);
                     } catch (e) {
@@ -349,10 +356,10 @@
                     }
                     if ($.isArray(jsonValue)) {
                         for (var k = 0; k < jsonValue.length; ++k) {
-                            media.push(jsonValue[k]);
+                            mediaArray.push(jsonValue[k]);
                         }
                     } else if (jsonValue !== undefined) {
-                        media.push(jsonValue);
+                        mediaArray.push(jsonValue);
                     }
                 }
                 else if (display) {
@@ -366,9 +373,13 @@
 
             var carousel = $('#sidebar-carousel');
             carousel.slick('removeSlide', null, null, true);
-            $.each(media, function (key, val) {
+            $.each(image_media, function (key, val) {
                 var img = '<div><img src="' + val + '"/></div>';
                 carousel.slick('slickAdd', img);
+            });
+            $.each(video_media, function (key, val) {
+                var vid = '<div><video style="width: 100%; height: 100%;" controls src="' + val + '"/></div>';
+                carousel.slick('slickAdd', vid);
             });
         }
 
