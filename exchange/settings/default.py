@@ -465,9 +465,12 @@ if 'osgeo_importer' in INSTALLED_APPS:
 
 FILESERVICE_CONFIG = {
     'store_dir': os.getenv('FILESERVICE_MEDIA_ROOT', os.path.join(MEDIA_ROOT, 'fileservice')),
-    'types_allowed': ['.jpg', '.jpeg', '.png'],
-    'streaming_supported': False
+    'types_allowed': os.getenv('FILESERVICE_MEDIA_ALLOWED', ['.jpg', '.jpeg', '.png']),
+    'streaming_supported': os.getenv('FILESERVICE_STREAMING_SUPPORTED', False)
 }
+
+if isinstance(FILESERVICE_CONFIG['types_allowed'], basestring):
+    FILESERVICE_CONFIG['types_allowed'] = FILESERVICE_CONFIG['types_allowed'].split(',')
 
 try:
     from local_settings import *  # noqa
