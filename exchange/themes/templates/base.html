@@ -52,6 +52,7 @@
           <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav toolbar">
               {% block tabs %}
+              {% if user.is_superuser %}
               <li id="nav_layers">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                   {% trans "Data" %}
@@ -103,6 +104,7 @@
                   {% endif %}
                 </ul>
               </li>
+              {% endif %}
               {% block extra_tab %}
               {% endblock %}
               {% endblock %}
@@ -117,10 +119,10 @@
                     <i class="fa fa-caret-down"></i>
                   </a>
                   <ul class="dropdown-menu">
+                    {% if user.is_superuser %}
                     <li><a href="{{ user.get_absolute_url }}">{% trans "Profile" %}</a></li>
                     <li><a href="{% url "recent-activity" %}">{% trans "Recent Activity" %}</a></li>
                     <li><a href="{% url "messages_inbox" %}">{% trans "Inbox" %}</a></li>
-                    {% if user.is_staff %}
                     <li role="separator" class="divider"></li>
                     <li><a href="{% url "csw-record-list" %}">Registry</a></li>
                     <li><a href="{% url "admin:index" %}">Admin</a></li>
