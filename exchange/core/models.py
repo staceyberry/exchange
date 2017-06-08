@@ -138,3 +138,103 @@ class CSWRecordReference(models.Model):
     record = models.ForeignKey(CSWRecord, related_name="references")
     scheme = models.CharField(verbose_name='Service Type', choices=scheme_choices, max_length=100)
     url = models.URLField(max_length=512, blank=False)
+
+
+class MapCommentEnabled(models.Model):
+    map_id = models.IntegerField()
+    enabled = models.BooleanField()
+
+class MapCommentEnabledForm(forms.ModelForm):
+    class Meta:
+        model = MapCommentEnabled
+        fields = ('map_id', 'enabled')
+
+class Comment(models.Model):
+    comment_category_choices = (
+        ('Safety', 'Safety'),
+        ('Maintenance', 'Maintenance'),
+        ('TrafficCongestion', 'Traffic Congestion'),
+        ('IntersectionRelated', 'Intersection-Related'),
+        ('TransitRouteStop', 'Transit Route/Stop'),
+        ('OnRoadBikeFacility', 'On-Road Bike Facility'),
+        ('OffRoadPathTrail', 'Off-Road Path Trail'),
+        ('Sidewalk', 'Sidewalk'),
+        ('Other', 'Other')
+    )
+
+    comment_status_choices = (
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+        ('Unapproved', 'Unapproved')
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    username = models.TextField(blank=True)
+    submit_date_time = models.DateTimeField(default=datetime.datetime.now, blank=True)  # use server time
+    feature_reference = models.TextField(blank=True)  # passed as argument
+    feature_geom = models.TextField(blank=True)  # passed as argument
+    approver = models.TextField(blank=True)  # passed from header
+    title = models.TextField()  # passed as argument
+    message = models.TextField()  # passed as argument
+    approved_date = models.DateTimeField(blank=True, null=True)  # use server time
+    # only allowed to be changed by admin, default to 'Unapproved'
+    status = models.TextField(default='Unapproved', choices=comment_status_choices)
+    map_id = models.IntegerField()  # passed as argument in url?
+    image = models.TextField(blank=True)  # not sure how we're handling this yet
+    category = models.TextField(choices=comment_category_choices)  # passed as argument
+
+class CommentUserForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('username', 'feature_reference', 'feature_geom', 'title', 'message',
+                  'map_id', 'image', 'category')
+
+class CommentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ('id', 'approver', 'approved_date', 'status', 'username', 'feature_reference',
+                  'feature_geom', 'title', 'message',
+                  'map_id', 'image', 'category')
+
+
+class CSWRecordForm(forms.ModelForm):
+    class Meta:
+        model = CSWRecord
+        fields = ('title', 'modified', 'creator', 'record_type', 'alternative', 'abstract',
+                  'source', 'relation', 'record_format', 'bbox_upper_corner',
+                  'bbox_lower_corner', 'contact_information', 'gold',
+                  'category')
+
+        labels = {
+            'title': _('Title'),
+            'comments_enabled': _('Comments Enabled'),
+            'modified': _('Date Last Modified'),
+            'creator': _('Creator'),
+            'record_type': _('Type'),
+            'alternative': _('Alternative'),
+            'abstract': _('Abstract'),
+            'source': _('Source'),
+            'relation': _('Relation'),
+            'record_format': _('Format'),
+            'bbox_upper_corner': _('Bounding Box: Upper Corner'),
+            'bbox_lower_corner': _('Bounding Box: Lower Corner'),
+            'contact_information': _('Contact Information'),
+            'gold': _('Gold'),
+            'category': _('Category'),
+        }
+
+        help_texts = {
+            # 'title': _('Title'),
+            # 'creator': _('Creator'),
+            # 'record_type': _('Type'),
+            # 'alternative': _('Alternative'),
+            # 'abstract': _('Abstract'),
+            # 'source': _('Source'),
+            # 'relation': _('Relation'),
+            # 'record_format': _('Format'),
+            'bbox_upper_corner': _('Coordinates for upper left corner'),
+            'bbox_lower_corner': _('Coordinates for lower right corner'),
+            # 'contact_information': _('Contact Information'),
+            # 'gold': _('Gold'),
+            # 'category': _('Category'),
+        }

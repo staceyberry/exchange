@@ -1,16 +1,18 @@
 import os
 import re
 
-import urllib, json
+import urllib
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 from django.conf import settings
 from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, QueryDict
 from django.core.urlresolvers import reverse
 from django.core.serializers import serialize
 from django.contrib.admin.views.decorators import staff_member_required
-from exchange.core.models import ThumbnailImage, ThumbnailImageForm, CSWRecord, CSWRecordReference
+from exchange.core.models import (ThumbnailImage, ThumbnailImageForm, CSWRecord, CSWRecordReference, Comment,
+                                  CommentUserForm, MapCommentEnabledForm, MapCommentEnabled)
+
 from exchange.core.forms import CSWRecordReferenceFormSet, CSWRecordReferenceForm, CSWRecordForm
 from geonode.base.models import TopicCategory
 from exchange.tasks import create_new_csw, load_service_layers
@@ -18,8 +20,9 @@ from geonode.maps.views import _resolve_map
 import requests
 import logging
 import datetime
+import json
+import csv
 from django.views.generic import CreateView, UpdateView, ListView
-
 from django.core.urlresolvers import reverse_lazy
 from django.db import transaction
 
@@ -412,6 +415,7 @@ def unified_elastic_search(request, resourcetype='base'):
 
     return JsonResponse(object_list)
 
+
 def empty_page(request):
     return HttpResponse('')
         
@@ -492,3 +496,109 @@ class CSWRecordUpdate(UpdateView):
                 cswrecordreference.save()
         return super(CSWRecordUpdate, self).form_valid(form)
 
+
+def set_comments(request, mapid):
+    if request.method == 'POST':
+        if request.user.is_staff:
+            try:
+                record = MapCommentEnabled.objects.get(map_id=mapid)
+                record.enabled = request.POST['enabled'] == 'true'
+                record.save()
+            except MapCommentEnabled.DoesNotExist:
+                model = request.POST.copy()
+                model['map_id'] = mapid
+                form = MapCommentEnabledForm(model)
+                if form.is_valid():
+                    form.save()
+            return JsonResponse({'success': True})
+        return HttpResponse('Unauthorized', status=401)
+    else:
+        try:
+            record = MapCommentEnabled.objects.get(map_id=mapid)
+            return JsonResponse({'enabled': record.enabled})
+        except MapCommentEnabled.DoesNotExist:
+            return JsonResponse({'enabled': False})
+
+
+def request_comments(request, mapid):
+    if request.method == 'POST':
+        form = CommentUserForm(request.POST)
+        if form.is_valid():
+            new_record = form.save(commit=False)
+            new_record.username = request.user.username
+            new_record.save()
+            return JsonResponse({'success': True})
+        return HttpResponse(form.errors.as_json(), content_type="application/json")
+    elif request.method == 'PUT':
+        if request.user.is_staff:
+            qd = QueryDict(request.body)
+            put_dict = {k: v[0] if len(v) == 1 else v for k, v in qd.lists()}
+            record = Comment.objects.get(id=put_dict['id'])
+            record.status = put_dict['status']
+            record.approved_date = datetime.datetime.now()
+            record.approver = request.user.username
+            record.save()
+            return JsonResponse({'success': True})
+        return HttpResponse('Unauthorized', status=401)
+    elif request.user.is_staff:
+        feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
+                                 'approver', 'title', 'message', 'approved_date', 'status',
+                                 'image', 'category')
+
+        if 'start_date' in request.GET and 'end_date' in request.GET:
+            iso8601_format = '%Y-%m-%dT%H:%M:%S%Z'
+            records = Comment.objects.filter(map_id=mapid,
+                                             submit_date_time__lt=datetime.datetime.strptime(request.GET['end_date'],
+                                                                                             iso8601_format),
+                                             submit_date_time__gt=datetime.datetime.strptime(request.GET['start_date'],
+                                                                                             iso8601_format))\
+                .order_by('-submit_date_time')
+        else:
+            records = Comment.objects.filter(map_id=mapid).order_by('-submit_date_time')
+
+        if 'csv' in request.GET:
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = 'attachment; filename=map-comments.csv'
+            response['Content-Encoding'] = 'utf-8'
+            writer = csv.writer(response)
+            writer.writerow(feature_property_keys)
+            # default csv writer chokes on unicode
+            encode = lambda v: v.encode('utf-8') if isinstance(v, basestring) else str(v)
+            get_value = lambda a, c: getattr(a, c) if c not in ('start_time', 'end_time') else ''
+            for a in records:
+                vals = [encode(get_value(a, c)) for c in feature_property_keys]
+                writer.writerow(vals)
+            return response
+
+        # format = request.GET.get('format', "")
+        # if format.lower() == 'json':
+        def to_features(orig_records):
+            results = []
+            for item in orig_records:
+                feature = {'id': item.id, 'properties': {}, 'type': 'Feature'}
+                if item.feature_geom and item.feature_geom != '':
+                    feature['geometry'] = json.loads(item.feature_geom)
+                for key in feature_property_keys:
+                    feature['properties'][key] = getattr(item, key)
+                results.append(feature)
+            return results
+
+        return JsonResponse({'type': 'FeatureCollection', 'staff': True, 'features': to_features(records)})
+    # Otherwise, this should just be a GET by a user
+    else:
+        feature_property_keys = ('username', 'submit_date_time', 'feature_reference',
+                                 'title', 'message', 'image', 'category', 'status')
+        records = Comment.objects.filter(map_id=mapid, status='Approved').order_by('-submit_date_time')
+
+        def to_features(orig_records):
+            results = []
+            for item in orig_records:
+                feature = {'id': item.id, 'properties': {}, 'type': 'Feature'}
+                if item.feature_geom and item.feature_geom != '':
+                    feature['geometry'] = json.loads(item.feature_geom)
+                for key in feature_property_keys:
+                    feature['properties'][key] = getattr(item, key)
+                results.append(feature)
+            return results
+
+        return JsonResponse({'type': 'FeatureCollection', 'staff': False, 'features': to_features(records)})
