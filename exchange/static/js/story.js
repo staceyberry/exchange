@@ -360,12 +360,22 @@
                     }
                     if ($.isArray(jsonValue)) {
                         for (var k = 0; k < jsonValue.length; ++k) {
-                            if (jsonValue[k]) {
-                                mediaArray.push(jsonValue[k]);
+                            var url = jsonValue[k];
+                            if (url) {
+                                if (url.indexOf('http') !== 0) {
+                                    //TODO: This should really be the view endpoint rather than dl for videos
+                                    url = '/api/fileservice/download/' + url;
+                                }
+                                mediaArray.push(url);
                             }
                         }
                     } else if (jsonValue !== undefined) {
-                        mediaArray.push(jsonValue);
+                        url = jsonValue;
+                        if (url.indexOf('http') !== 0) {
+                            //TODO: This should really be the view endpoint rather than dl for videos
+                            url = '/api/fileservice/download/' + url;
+                        }
+                        mediaArray.push(url);
                     }
                 }
                 else if (display) {
