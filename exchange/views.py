@@ -132,6 +132,7 @@ def geocode(request):
     else:
         return JsonResponse({'error': 'No address supplied'})
 
+
 def breadcrumbs(request):
     if 'startDate' not in request.GET:
         return JsonResponse({'error': 'startDate is required'})
