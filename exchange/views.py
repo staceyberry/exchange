@@ -16,11 +16,11 @@ from exchange.core.forms import CSWRecordReferenceFormSet, CSWRecordReferenceFor
 from geonode.base.models import TopicCategory
 from exchange.tasks import create_new_csw, update_csw, delete_csw, load_service_layers
 from geonode.maps.views import _resolve_map
+from .utils import get_records
 from geopy.geocoders import Nominatim
 import requests
 import logging
 import datetime
-import cx_Oracle
 
 from django.views.generic import CreateView, UpdateView, ListView
 
@@ -51,87 +51,6 @@ def layer_metadata_detail(request, layername,
         'SITEURL': settings.SITEURL[:-1]
     }))
 
-def breadcrumbs(request):
-    if 'startDate' not in request.GET:
-        return JsonResponse({'error': 'startDate is required'})
-    if 'endDate' not in request.GET:
-        return JsonResponse({'error': 'endDate is required'})
-    if 'tailNumber' not in request.GET:
-        return JsonResponse({'error': 'tailNumber is required'})
-
-    try:
-        start_date = datetime.datetime.strptime(request.GET.get('startDate'), '%Y-%m-%d')
-        end_date = datetime.datetime.strptime(request.GET.get('endDate'), '%Y-%m-%d')
-    except ValueError:
-        return JsonResponse({'error': 'Invalid date format, must be Y-m-d'})
-
-    if end_date <= start_date:
-        return JsonResponse({'error': 'Start date must be before end date'})
-    delta = end_date - start_date
-    if delta.days > 2:
-        return JsonResponse({'error': 'Maximum search range is 2 days'})
-
-    start_date = start_date.strftime('%d-%b-%Y')
-    end_date = start_date.strftime('%d-%b-%Y')
-
-    statement = '''
-      SELECT a.mmu_msg_idx,
-       a.pos_dtg,
-       a.aircraftid,
-       a.msgtype,
-       a.xy_lat,
-       a.xy_lon,
-       a.altitude,
-       a.speed,
-       a.heading
-      FROM scmmu.hl_mmu_messages a
-      WHERE a.msgtype IN ('Position', 'Arrival', 'Departure')
-        AND a.aircraftid = :tail_number
-        AND a.pos_dtg BETWEEN TO_DATE (:start_date)
-                         AND TO_DATE (:end_date)
-      ORDER BY a.pos_dtg
-    '''
-
-    result = {
-        'type': 'FeatureCollection',
-        'features': [
-        ]
-    }
-
-    tail_number = request.GET.get('tailNumber')
-
-    con = cx_Oracle.connect('pythonhol/welcome@127.0.0.1/orcl')
-    cur = con.cursor()
-    cur.prepare(statement)
-    cur.execute(None, {'tail_number': tail_number, 'start_date': start_date, 'end_date': end_date})
-    for record in cur:
-        result.features.push({
-            'type': 'Feature',
-            'geometry': {
-                'type': 'Point',
-                'coordinates': [record.xy_lon, record.xy_lat]
-            },
-            'properties': record
-        })
-    cur.close()
-    con.close()
-
-    return JsonResponse(result)
-
-
-def geocode(request):
-    geolocator = Nominatim()
-    location_string = request.GET.get('address')
-    if location_string:
-        results = geolocator.geocode(location_string)
-        if results is not None:
-            return JsonResponse({'coordinates': {'lat': results.latitude, 'lon': results.longitude},
-                                 'address': results.address})
-        else:
-            return JsonResponse({'error': 'No coordinates found'})
-    else:
-        return JsonResponse({'error': 'No address supplied'})
-
 
 def breadcrumbs(request):
     if 'startDate' not in request.GET:
@@ -154,7 +73,7 @@ def breadcrumbs(request):
         return JsonResponse({'error': 'Maximum search range is 2 days'})
 
     start_date = start_date.strftime('%d-%b-%Y')
-    end_date = start_date.strftime('%d-%b-%Y')
+    end_date = end_date.strftime('%d-%b-%Y')
 
     statement = '''
       SELECT a.mmu_msg_idx,
@@ -168,7 +87,7 @@ def breadcrumbs(request):
        a.heading
       FROM scmmu.hl_mmu_messages a
       WHERE a.msgtype IN ('Position', 'Arrival', 'Departure')
-        AND a.aircraftid = :tail_number
+        AND UPPER(a.aircraftid) = UPPER(:tail_number)
         AND a.pos_dtg BETWEEN TO_DATE (:start_date)
                          AND TO_DATE (:end_date)
       ORDER BY a.pos_dtg
@@ -181,22 +100,16 @@ def breadcrumbs(request):
     }
 
     tail_number = request.GET.get('tailNumber')
-
-    con = cx_Oracle.connect('pythonhol/welcome@127.0.0.1/orcl')
-    cur = con.cursor()
-    cur.prepare(statement)
-    cur.execute(None, {'tail_number': tail_number, 'start_date': start_date, 'end_date': end_date})
-    for record in cur:
-        result.features.push({
+    records = get_records(statement, {'tail_number': tail_number, 'start_date': start_date, 'end_date': end_date})
+    for record in records:
+        result['features'].append({
             'type': 'Feature',
             'geometry': {
                 'type': 'Point',
-                'coordinates': [record.xy_lon, record.xy_lat]
+                'coordinates': [record['XY_LON'], record['XY_LAT']]
             },
             'properties': record
         })
-    cur.close()
-    con.close()
 
     return JsonResponse(result)
 
@@ -274,7 +187,7 @@ def csw_status_table(request):
     return render_to_response("csw/status_fill.html",
                               {
                                   "records": records,
-                               },
+                              },
                               context_instance=RequestContext(request))
 
 # Reformat objects for use in the results.
@@ -384,9 +297,9 @@ def unified_elastic_search(request, resourcetype='base'):
 
     # only show registry, documents, layers, and maps
     q = Q({"match": {"_type": "layer"}}) | Q(
-          {"match": {"type_exact": "layer"}}) | Q(
-          {"match": {"type_exact": "document"}}) | Q(
-          {"match": {"type_exact": "map"}})
+        {"match": {"type_exact": "layer"}}) | Q(
+        {"match": {"type_exact": "document"}}) | Q(
+        {"match": {"type_exact": "map"}})
     search = search.query(q)
 
     # filter by resource type if included by path
@@ -472,14 +385,14 @@ def unified_elastic_search(request, resourcetype='base'):
 
     if extent_start:
         q = Q(
-                {'range': {'temporal_extent_end': {'gte': extent_start}}}
-            )
+            {'range': {'temporal_extent_end': {'gte': extent_start}}}
+        )
         search = search.query(q)
 
     if extent_end:
         q = Q(
-                {'range': {'temporal_extent_start': {'lte': extent_end}}}
-            )
+            {'range': {'temporal_extent_start': {'lte': extent_end}}}
+        )
         search = search.query(q)
 
     if categories:
@@ -516,24 +429,24 @@ def unified_elastic_search(request, resourcetype='base'):
     # Apply sort
     if sort.lower() == "-date":
         search = search.sort({"date":
-                              {"order": "desc",
-                               "missing": "_last",
-                               "unmapped_type": "date"
-                               }},
+                                  {"order": "desc",
+                                   "missing": "_last",
+                                   "unmapped_type": "date"
+                                   }},
                              {"layer_date":
-                              {"order": "desc",
-                               "missing": "_last",
-                               "unmapped_type": "date"}})
+                                  {"order": "desc",
+                                   "missing": "_last",
+                                   "unmapped_type": "date"}})
     elif sort.lower() == "date":
         search = search.sort({"date":
-                              {"order": "asc",
-                               "missing": "_last",
-                               "unmapped_type": "date"
-                               }},
+                                  {"order": "asc",
+                                   "missing": "_last",
+                                   "unmapped_type": "date"
+                                   }},
                              {"layer_date":
-                              {"order": "asc",
-                               "missing": "_last",
-                               "unmapped_type": "date"}})
+                                  {"order": "asc",
+                                   "missing": "_last",
+                                   "unmapped_type": "date"}})
     elif sort.lower() == "title":
         search = search.sort('title')
     elif sort.lower() == "-title":
@@ -542,14 +455,14 @@ def unified_elastic_search(request, resourcetype='base'):
         search = search.sort('-popular_count')
     else:
         search = search.sort({"date":
-                              {"order": "desc",
-                               "missing": "_last",
-                               "unmapped_type": "date"
-                               }},
+                                  {"order": "desc",
+                                   "missing": "_last",
+                                   "unmapped_type": "date"
+                                   }},
                              {"layer_date":
-                              {"order": "desc",
-                               "missing": "_last",
-                               "unmapped_type": "date"}})
+                                  {"order": "desc",
+                                   "missing": "_last",
+                                   "unmapped_type": "date"}})
 
     # print search.to_dict()
     search = search[offset:offset + limit]
@@ -582,7 +495,7 @@ def unified_elastic_search(request, resourcetype='base'):
 
 def empty_page(request):
     return HttpResponse('')
-        
+
 
 class CSWRecordList(ListView):
     model = CSWRecord
@@ -636,7 +549,7 @@ class CSWRecordUpdate(UpdateView):
     model = CSWRecord
     template_name = 'csw/new.html'
     fields = ['source', 'title', 'category', 'abstract',
-                  'alternative', 'creator', 'contact_email', 'contact_phone', 'gold']
+              'alternative', 'creator', 'contact_email', 'contact_phone', 'gold']
     success_url = reverse_lazy('csw-record-list')
 
     def get_context_data(self, **kwargs):

@@ -275,6 +275,12 @@ DATABASES['exchange_imports'] = dj_database_url.parse(
     conn_max_age=600
 )
 DATABASES['exchange_imports']['ENGINE'] = 'django.contrib.gis.db.backends.postgis'
+DATABASES['oracle'] = {}
+DATABASES['oracle']['HOST'] = ''
+DATABASES['oracle']['SERVICE_NAME'] = ''
+DATABASES['oracle']['NAME'] = ''
+DATABASES['oracle']['PASSWORD'] = ''
+DATABASES['oracle']['PORT'] = 1521
 
 WGS84_MAP_CRS = str2bool(os.environ.get('WGS84_MAP_CRS', 'False'))
 if WGS84_MAP_CRS:
