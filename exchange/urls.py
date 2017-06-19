@@ -38,6 +38,7 @@ js_info_dict = {
 urlpatterns = patterns(
     '',
     url(r'^/?$', views.home_screen, name='home'),
+    url(r'^viewer/?$', views.map_viewer, name='storytools-viewer'),
     url(r'^layers/(?P<layername>[^/]*)/metadata_detail$',
         views.layer_metadata_detail, name='layer_metadata_detail'),
     url(r'^maps/(?P<mapid>[^/]*)/metadata_detail$', views.map_metadata_detail,

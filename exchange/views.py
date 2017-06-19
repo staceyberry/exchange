@@ -32,12 +32,16 @@ logger = logging.getLogger(__name__)
 
 
 def home_screen(request):
-    categories = TopicCategory.objects.filter(is_choice=True).order_by('pk')
-    return render(request, 'index.html', {'categories': categories})
+    return render(request, 'map_index.html', {})
 
 
 def documentation_page(request):
     return HttpResponseRedirect('/static/docs/index.html')
+
+
+def map_viewer(request, template='map_viewer.html'):
+    return render_to_response(template, RequestContext(request, {
+    }))
 
 
 def layer_metadata_detail(request, layername,
