@@ -52,6 +52,7 @@
           <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav toolbar">
               {% block tabs %}
+              {% if user.is_superuser %}
               <li id="nav_layers">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                   {% trans "Data" %}
@@ -103,6 +104,7 @@
                   {% endif %}
                 </ul>
               </li>
+              {% endif %}
               {% block extra_tab %}
               {% endblock %}
               {% endblock %}
@@ -139,7 +141,7 @@
               {% else %}
                 <li><a href="#" data-toggle="modal" data-target="#SigninModal" role="button" >{% trans "Log In" %} </a></li>
               {% endif %}
-
+              {% if user.is_superuser %}
               <li>
                 <div class="search">
                   <form id="search" action="{% url "search" %}" >
@@ -152,6 +154,7 @@
                   </form>
                 </div>
               </li>
+              {% endif %}
             </ul>
           </div> <!--/.nav-collapse -->
           {% endif %}
@@ -188,6 +191,7 @@
 
   {% block footer %}
       {% get_theme as theme %}
+    {% comment %}
       <footer class="footer">
         <div class="container">
           <div class="row">
@@ -214,10 +218,13 @@
                 {% else %}
                   {% trans "Documentation" %}</a>
                 {% endif %}
+
+
             </div>
           </div>
         </div> <!-- /.container -->
       </footer>
+      {% endcomment %}
   {% endblock footer %}
 
 
