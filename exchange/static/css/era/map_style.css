@@ -241,12 +241,14 @@ html, body {
         }
 
         .stLegend {
-            display: inline-block;
-            top: 60px;
+            display: none;
+            top: 30px;
             position: relative;
             z-index: 999;
             float: right;
             right: 11px;
+            border: 3px solid #e4e3ca;
+            border-radius: 2px 2px 0 0;
         }
 
         #legend-btn-border {
@@ -259,15 +261,17 @@ html, body {
         }
 
         .ol-control button{
-            background: rgba(11, 11, 11, 0.6) !important;
+            background: rgb(244, 67, 54) !important;
+            width: 2em;
+            height: 2em;
         }
 
         #legend-btn {
-            height: 22px;
-            width: 22px;
             color: white;
-            background: rgba(11, 11, 11, 0.6) !important;
+            background: rgb(244, 67, 54) !important;
             border-radius: 2px;
+            width: 2em;
+            height: 2em;
         }
 
         .legend-panel-title {
