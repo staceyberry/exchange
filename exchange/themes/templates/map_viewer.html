@@ -32,7 +32,10 @@
         })();
 
         var BASEMAP_CONFIG =  {{ MAP_BASELAYERS|safe }};
+        var ORG = {% if user.is_authenticated %} "{{ user.organization }}" {% else %} undefined {% endif %};
+        var SITE_URL = "{{ SITE_URL}}";
     </script>
+    <script src="{{ STATIC_URL }}js/era/helpers.js?v={{ VERSION }}"></script>
     <script src="{{ STATIC_URL }}js/era/viewer.js?v={{ VERSION }}"></script>
 </head>
 <body ng-controller="viewerController as viewer">

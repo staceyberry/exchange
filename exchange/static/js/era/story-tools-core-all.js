@@ -24792,7 +24792,9 @@ exports.easingFunctions = {
                   layer.getLayer().getSource().addFeatures(layer.get('features'));
                 }
               } else {
-                layer.setWMSSource();
+                if(!(layer.getLayer() instanceof ol.layer.Vector)) {
+                    layer.setWMSSource();
+                }
               }
               deferred.resolve(layer);
             }, function() {

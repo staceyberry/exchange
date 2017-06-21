@@ -40,7 +40,7 @@ window.onload = function() {
 
     // Initialize the SpriteMap
     spriteMap = new SpriteMap(
-        'img/chopper-small.png', // sprite image
+        '/static/img/chopper-small.png', // sprite image
         { // animation sequences
             TheChopper: {
                 // startRow: 0,

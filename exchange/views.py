@@ -55,7 +55,8 @@ def map_viewer(request, template='map_viewer.html'):
                 except:
                     pass
     return render_to_response(template, RequestContext(request, {
-        'MAP_BASELAYERS': map_baselayers
+        'MAP_BASELAYERS': map_baselayers,
+        'SITEURL': settings.SITEURL[:-1]
     }))
 
 
