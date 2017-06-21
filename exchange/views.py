@@ -5,6 +5,7 @@ import urllib, json
 from django.shortcuts import render, render_to_response
 from django.template import RequestContext
 from django.conf import settings
+from django.utils.text import slugify
 from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.core.urlresolvers import reverse
@@ -40,7 +41,21 @@ def documentation_page(request):
 
 
 def map_viewer(request, template='map_viewer.html'):
+    map_baselayers = [{'title': 'OpenStreetMap', 'type': 'OSM', 'name': 'osm'},
+                      {'title': 'World Topo Map', 'type': 'ESRI', 'name': 'world-topo-map'}]
+
+    for item in settings.MAP_BASELAYERS:
+        if 'group' in item and item['group'] == 'background':
+            if 'args' in item:
+                try:
+                    map_baselayers.append({'url': item['args'][1][0].replace('$', ''),
+                                   'type': item['type'].split('.')[2],
+                                   'name': str(slugify(item['args'][0])),
+                                   'title': item['args'][0],})
+                except:
+                    pass
     return render_to_response(template, RequestContext(request, {
+        'MAP_BASELAYERS': map_baselayers
     }))
 
 
