@@ -70,12 +70,11 @@ def about_page(request, template='about.html'):
             release_notes = release['body'].replace(' - ', '\n-')
 
     try:
-        geoserver_version = requests.get(
-            '{}rest/about/version.json'.format(
-                settings.OGC_SERVER['default']['LOCATION']
-            )
-        ).json()['about']['resource'][0]
-        geoserver_version = {'version': geoserver_version['Version'], 'commit': geoserver_version['Git-Revision'][:7]}
+        ogc_server = settings.OGC_SERVER['default']
+        geoserver_url = '{}/rest/about/version.json'.format(ogc_server['LOCATION'].strip('/'))
+        resp = requests.get(geoserver_url, auth=(ogc_server['USER'], ogc_server['PASSWORD']))
+        version = resp.json()['about']['resource'][0]
+        geoserver_version = {'version': version['Version'], 'commit': version['Git-Revision'][:7]}
     except:
         geoserver_version = {'version': '', 'commit': ''}
 
