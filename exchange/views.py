@@ -2,7 +2,7 @@ import os
 import re
 
 import urllib
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render, render_to_response, redirect
 from django.template import RequestContext
 from django.conf import settings
 from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
@@ -15,7 +15,7 @@ from exchange.core.models import (ThumbnailImage, ThumbnailImageForm, CSWRecord,
 
 from exchange.core.forms import CSWRecordReferenceFormSet, CSWRecordReferenceForm, CSWRecordForm
 from geonode.base.models import TopicCategory
-from exchange.tasks import create_new_csw, load_service_layers
+from exchange.tasks import create_new_csw, update_csw, delete_csw, load_service_layers
 from geonode.maps.views import _resolve_map
 import requests
 import logging
@@ -494,6 +494,8 @@ class CSWRecordUpdate(UpdateView):
             if cswrecordreference.is_valid():
                 cswrecordreference.instance = self.object
                 cswrecordreference.save()
+
+            update_csw.delay(self.object.id)
         return super(CSWRecordUpdate, self).form_valid(form)
 
 
@@ -602,3 +604,12 @@ def request_comments(request, mapid):
             return results
 
         return JsonResponse({'type': 'FeatureCollection', 'staff': False, 'features': to_features(records)})
+
+# Attempt to delete the record.
+#
+def delete_csw_view(request, pk):
+    # trigger the CSW delete task
+    delete_csw.delay(pk)
+
+    # bounce the user back to the index.
+    return redirect('csw-record-list')
