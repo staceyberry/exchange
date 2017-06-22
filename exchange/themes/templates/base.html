@@ -105,7 +105,6 @@
               {% if not user.is_authenticated and REGISTRATION_OPEN %}
                 <li><a href="{% url "account_signup" %}">{% trans "Register" %}</a></li>
               {% endif %}
-
               {% if user.is_authenticated %}
                 <li>
                   <a href="#" class="dropdown-toggle avatar" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
@@ -130,9 +129,6 @@
                     {% endif %}
                   </ul>
                 </li>
-              {% else %}
-                <li><a href="#" data-toggle="modal" data-target="#SigninModal" role="button" >{% trans "Log In" %} </a></li>
-              {% endif %}
 
               <li>
                 <div class="search">
@@ -146,6 +142,7 @@
                   </form>
                 </div>
               </li>
+              {% endif %}
             </ul>
           </div> <!--/.nav-collapse -->
         </div>
