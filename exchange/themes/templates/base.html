@@ -48,11 +48,10 @@
             </button>
             <a class="navbar-brand" href="{% url "home" %}">Exchange</a>
           </div>
-          {% if not LOCKDOWN_EXCHANGE or user.is_authenticated %}
           <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav toolbar">
               {% block tabs %}
-              {% if user.is_superuser %}
+              {% if user.is_authenticated %}
               <li id="nav_layers">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                   {% trans "Data" %}
@@ -61,15 +60,12 @@
                 <ul class="dropdown-menu">
                   <li><a href="{% url "layer_browse" %}">{% trans "Layers" %}</a></li>
                   <li><a href="{% url "document_browse" %}">{% trans "Documents" %}</a></li>
-                  {% if user.is_authenticated %}
                   <li role="separator" class="divider"></li>
                   <li><a href="{% url "layer_upload" %}">Upload Layer</a></li>
                   <li><a href="{% url "document_upload" %}">Upload Document</a></li>
-                  {% endif %}
                 </ul>
               </li>
               <li id="nav_maps">
-                {% if user.is_authenticated %}
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
                     {% trans "Maps" %}
                     <i class="fa fa-caret-down"></i>
@@ -81,9 +77,6 @@
                     <li><a href="/story/new">Compose Story</a></li>
                     {% endif %}
                   </ul>
-                {% else %}
-                  <a href="{% url "maps_browse" %}">{% trans "Maps" %}</a>
-                {% endif %}
               </li>
               <li>
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
@@ -112,6 +105,7 @@
               {% if not user.is_authenticated and REGISTRATION_OPEN %}
                 <li><a href="{% url "account_signup" %}">{% trans "Register" %}</a></li>
               {% endif %}
+
               {% if user.is_authenticated %}
                 <li>
                   <a href="#" class="dropdown-toggle avatar" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
@@ -154,7 +148,6 @@
               </li>
             </ul>
           </div> <!--/.nav-collapse -->
-          {% endif %}
         </div>
       </nav>
     {% endblock header %}
