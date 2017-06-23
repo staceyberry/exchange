@@ -313,7 +313,7 @@
 		"pk": 16,
 		"model": "base.topiccategory",
 		"fields": {
-			"description": "means and aids for conveying persons and/or goods. Examples: roads, airports/airstrips, shipping routes, tunnels, nautical charts, vehicle or vessel location, aeronautical charts, railways",
+			"description": "Transportation",
 			"gn_description": "Transportation",
 			"is_choice": true,
 			"fa_class": "fa-truck",
