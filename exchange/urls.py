@@ -55,6 +55,9 @@ urlpatterns = patterns(
     url(r'^csw/search/$', views.csw_arcgis_search, name='csw_arcgis_search'),
     url(r'^breadcrumbs$', views.breadcrumbs, name='breadcrumbs'),
     url(r'^geocode$', views.geocode, name='geocode'),
+    url(r'^csw/status/$', views.csw_status, name='csw_status'),
+    url(r'^csw/status_table/$', views.csw_status_table, name='csw_status_table'),
+    url(r'^about/', views.about_page, name='about')
 )
 
 if settings.REGISTRY is False:
