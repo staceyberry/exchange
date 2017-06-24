@@ -54,7 +54,7 @@ def map_viewer(request, template='map_viewer.html'):
     return render_to_response(template, RequestContext(request, {
         'MAP_BASELAYERS': map_baselayers,
         'SITEURL': settings.SITEURL[:-1]
-
+    }))
 
 def get_pip_version(project):
     version = [

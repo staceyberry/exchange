@@ -67,7 +67,7 @@ def get_records(statement, params):
         dsn_tns = cx_Oracle.makedsn(settings.DATABASES['oracle']['HOST'],
                                     settings.DATABASES['oracle']['PORT'],
                                     service_name=settings.DATABASES['oracle']['SERVICE_NAME'])
-        con = cx_Oracle.connect(settings.DATABASES['oracle']['NAME'],
+        con = cx_Oracle.connect(settings.DATABASES['oracle']['USER'],
                                 settings.DATABASES['oracle']['PASSWORD'], dsn_tns)
         cur = con.cursor()
         cur.prepare(statement)
