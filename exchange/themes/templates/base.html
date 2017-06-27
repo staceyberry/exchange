@@ -61,9 +61,11 @@
                 <ul class="dropdown-menu">
                   <li><a href="{% url "layer_browse" %}">{% trans "Layers" %}</a></li>
                   <li><a href="{% url "document_browse" %}">{% trans "Documents" %}</a></li>
+                  {% if user.is_superuser %}
                   <li role="separator" class="divider"></li>
                   <li><a href="{% url "layer_upload" %}">Upload Layer</a></li>
                   <li><a href="{% url "document_upload" %}">Upload Document</a></li>
+                  {% endif %}
                 </ul>
               </li>
               <li id="nav_maps">
@@ -73,7 +75,9 @@
                   </a>
                   <ul class="dropdown-menu">
                     <li><a href="{% url "maps_browse" %}">{% trans "Explore Maps" %}</a></li>
+                    {% if user.is_superuser %}
                     <li> <a href="{% url "new_map" %}">{% trans "Create Map" %}</a></li>
+                    {% endif %}
                     {% if STORYSCAPES_ENABLED %}
                     <li><a href="/story/new">Compose Story</a></li>
                     {% endif %}
