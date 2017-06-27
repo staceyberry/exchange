@@ -13,7 +13,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
 from django.shortcuts import render, render_to_response, redirect
 from django.template import RequestContext
-from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse, QueryDict
 from django.views.generic import CreateView, UpdateView, ListView
 from exchange.core.models import (ThumbnailImage, ThumbnailImageForm, CSWRecord, CSWRecordReference, Comment,
                                   CommentUserForm, MapCommentEnabledForm, MapCommentEnabled)
