@@ -83,7 +83,7 @@
 
 
         return [style];
-    }
+    };
 
     var styleFunc = function (feature) {
 
@@ -266,20 +266,18 @@
                 ],
                 scale: 0.25
             }),
-            text: new ol.style.Text({
-                text: feature.get('TITLE'),
-                fill: new ol.style.Fill({color: 'black'}),
-                //        stroke: new ol.style.Stroke({
-                //          color: 'yellow',
-                //        width: 4
-                //  }),
-                offsetX: -20,
-                offsetY: 20
-            })
+             text: new ol.style.Text({
+                    text: feature.get('TITLE'),
+                    fill: new ol.style.Fill({color: 'black'}),
+                    font: 'Normal' + ' ' + '10px' + ' ' + 'Arial',
+                    stroke: new ol.style.Stroke({color: '#ffffff', width: 3}),
+                    offsetX: -20,
+                    offsetY: 20
+                })
         })
 
         return [style];
-    }
+    };
 
     var styles = {
         'circle': new ol.style.Style({

@@ -131,7 +131,11 @@ html, body {
         .ol-zoom {
             right: .5em;
             left: auto;
-            top: 6.0em;
+            top: 2.0em;
+        }
+
+        ol-mouse-position {
+            display: none;
         }
 
         .ol-attribution {
