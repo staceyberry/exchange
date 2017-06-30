@@ -24559,7 +24559,7 @@ exports.easingFunctions = {
           url: storyLayer.get('host') + '/layers/' + storyLayer.get('id') + '/get'
         }).then(function(response) {
           if (response.data.attributes) {
-            storyLayer.set('geonodeAttribute', response.data.attributes);
+            storyLayer.set('geonodeAttributes', response.data.attributes);
           }
         }).catch(function(response){});
       },
