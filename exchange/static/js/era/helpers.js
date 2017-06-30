@@ -255,25 +255,32 @@
 
     var checkStyleFunc = function (feature) {
 
+        var image_src = '/static/img/aircraft-check-small.png';
+
+        if (feature.get('SPEED') && feature.get('SPEED') > 0) {
+            image_src = '/static/img/aircraft-air-small.png';
+        }
+
         var style = new ol.style.Style({
             image: new ol.style.Icon({
                 geometry: feature.getGeometry(),
                 rotation: 0.01745329251 * parseInt(feature.get('HEADING'), 10),
-                src: '/static/img/aircraft-check-small.png',
+                src: image_src,
                 size: [
                     30.5,
                     32
                 ],
+                color:  new ol.color.asArray('#00FFFF'),
                 scale: 0.25
             }),
-             text: new ol.style.Text({
-                    text: feature.get('TITLE'),
-                    fill: new ol.style.Fill({color: 'black'}),
-                    font: 'Normal' + ' ' + '10px' + ' ' + 'Arial',
-                    stroke: new ol.style.Stroke({color: '#ffffff', width: 3}),
-                    offsetX: -20,
-                    offsetY: 20
-                })
+            text: new ol.style.Text({
+                text: feature.get('TITLE'),
+                fill: new ol.style.Fill({color: 'black'}),
+                font: 'Normal' + ' ' + '10px' + ' ' + 'Arial',
+                stroke: new ol.style.Stroke({color: '#ffffff', width: 3}),
+                offsetX: -20,
+                offsetY: 20
+            })
         })
 
         return [style];
