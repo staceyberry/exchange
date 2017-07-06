@@ -69,12 +69,10 @@
         this.displayFeatureInfo = function (pixel, overlay) {
 
             var filterVisible = function (items) {
-                var filtered = [];
+                var filtered = {};
                 for (var i in items){
                     if (items[i].visible){
-                        var dict = {};
-                        dict[items[i].attribute] = items[i].attribute_label;
-                        filtered.push(dict);
+                        filtered[items[i].attribute] = items[i].attribute_label;
                     }
                 }
                 return filtered;
