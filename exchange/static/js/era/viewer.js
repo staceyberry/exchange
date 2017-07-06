@@ -68,6 +68,17 @@
 
         this.displayFeatureInfo = function (pixel, overlay) {
 
+            var filterVisible = function (items) {
+                var filtered = [];
+                for (var i in items){
+                    if (items[i].visible){
+                        var dict = {};
+                        dict[items[i].attribute] = items[i].attribute_label;
+                        filtered.push(dict);
+                    }
+                }
+                return filtered;
+            };
 
             var getHtml = function (feature, attributes) {
 
@@ -122,7 +133,7 @@
                         self.storyMap.getStoryLayers().forEach(function (lyr) {
                             if (lyr.getLayer() == selected_.layer) {
                                 attributes[selected_.layer.get('id')] = lyr.get('geonodeAttributes');
-                                current_attributes = lyr.get('geonodeAttributes');
+                                current_attributes = filterVisible(lyr.get('geonodeAttributes'));
                             }
                         });
                     } else {
