@@ -34,6 +34,8 @@ from exchange.storyscapes.models.base import Story
 from geonode.documents.models import Document
 from geonode.groups.models import GroupProfile
 
+from django.contrib.auth.models import Group
+
 register = template.Library()
 
 
@@ -138,3 +140,9 @@ def get_context_resourcetype(context):
         if "/{0}/".format(resource_type) in c_path:
             return resource_type
     return 'error'
+
+
+@register.filter(name='has_group')
+def has_group(user, group_name):
+    groups = Group.objects.filter(name__iexact=group_name)
+    return True if any(group in groups for group in user.groups.all()) else False
