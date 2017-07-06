@@ -130,7 +130,7 @@
 
                         self.storyMap.getStoryLayers().forEach(function (lyr) {
                             if (lyr.getLayer() == selected_.layer) {
-                                attributes[selected_.layer.get('id')] = lyr.get('geonodeAttributes');
+                                attributes[selected_.layer.get('id')] = filterVisible(lyr.get('geonodeAttributes'));
                                 current_attributes = filterVisible(lyr.get('geonodeAttributes'));
                             }
                         });
