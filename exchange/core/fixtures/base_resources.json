@@ -1,6 +1,6 @@
 [
 	{
-		"pk": 22,
+		"pk": 1,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Elevation",
@@ -10,7 +10,7 @@
 			"identifier": "elevation"
 		}
 	}, {
-		"pk": 23,
+		"pk": 2,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Human Geography",
@@ -20,7 +20,7 @@
 			"identifier": "humangeography"
 		}
 	}, {
-		"pk": 33,
+		"pk": 3,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Weather",
@@ -30,7 +30,7 @@
 			"identifier": "weather"
 		}
 	}, {
-		"pk": 16,
+		"pk": 4,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Transportation",
@@ -41,7 +41,7 @@
 		}
 	},
 	{
-		"pk": 1000,
+		"pk": 5,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Environmental Issues",
@@ -52,7 +52,7 @@
 		}
 	},
 	{
-		"pk": 1001,
+		"pk": 6,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Military",
@@ -63,7 +63,7 @@
 		}
 	},
 	{
-		"pk": 1002,
+		"pk": 7,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Miscellaneous Features",
@@ -74,7 +74,7 @@
 		}
 	},
 	{
-		"pk": 1003,
+		"pk": 8,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Natural Features",
@@ -85,7 +85,7 @@
 		}
 	},
 	{
-		"pk": 1004,
+		"pk": 9,
 		"model": "base.topiccategory",
 		"fields": {
 			"description": "Safety",
