@@ -161,3 +161,7 @@ resource-cart span.cart-label {
         max-width: 200px;
     }
 }
+
+#newMapButton {
+  color: #fff;
+}
