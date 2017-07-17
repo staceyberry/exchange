@@ -29,6 +29,7 @@
                 <li><a ng-if="item.detail_url.indexOf('/layers/') > -1" href="{% endverbatim %}{% url "new_map" %}?layer={% verbatim %}{{ item.detail_url.substring(8) }}">
                   {% endverbatim %}
                     <div class="dropdown">
+
                         <a class="btn btn-primary dropdown-toggle" type="button" id="newMapButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {% trans "Create a Map" %} <i class="fa fa-chevron-circle-down"></i>
                          </a>
