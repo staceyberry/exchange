@@ -29,13 +29,12 @@
                 <li><a ng-if="item.detail_url.indexOf('/layers/') > -1" href="{% endverbatim %}{% url "new_map" %}?layer={% verbatim %}{{ item.detail_url.substring(8) }}">
                   {% endverbatim %}
                     <div class="dropdown">
-
                         <a class="btn btn-primary dropdown-toggle" type="button" id="newMapButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {% trans "Create a Map" %} <i class="fa fa-chevron-circle-down"></i>
                          </a>
                         <ul class="dropdown-menu" aria-labelledby="newMapButton">
                             {% verbatim %}
-                                <li ng-repeat="obj in item.available_renderers">
+                                <li ng-repeat="obj in availableRenderers">
                                     <a href="{% endverbatim %}{% url "new_map" %}?layer={% verbatim %}{{item.detail_url.substring(8)}}&renderer={{obj[0]}}" class="btn">Create a {{obj[1]}} Map</a>
                                 </li>
                             {% endverbatim %}

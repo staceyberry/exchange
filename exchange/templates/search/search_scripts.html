@@ -30,6 +30,12 @@
   HAYSTACK_SEARCH = "{{ HAYSTACK_SEARCH }}".toLowerCase() === "true";
   HAYSTACK_FACET_COUNTS = "{{ HAYSTACK_FACET_COUNTS }}".toLowerCase() === "true";
   CLIENT_RESULTS_LIMIT = {{ CLIENT_RESULTS_LIMIT }};
+  if ("{{ GEONODE_CLIENT_ENABLED }}".toLowerCase() === "true") {
+      AVAILABLE_RENDERERS = [['geoext', 'GeoEXT'], ['react', 'React'], ['maploom', 'MapLoom']]
+  }
+  else {
+      AVAILABLE_RENDERERS = [['geoext', 'GeoEXT'], ['maploom', 'MapLoom']]
+  }
   {% get_context_resourcetype as pathc %}
         {% if pathc == "layers" %}
                 AUTOCOMPLETE_URL_RESOURCEBASE = '{% url "autocomplete_light_autocomplete" "LayerAutocomplete" %}';
