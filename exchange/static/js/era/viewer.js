@@ -295,7 +295,7 @@
     module.controller('viewerController', function ($rootScope, $scope, $q, $injector, $log, $interval, $timeout, stStoryMapBaseBuilder, stAnnotateLayer, MapManager, TimeControlsManager) {
         $scope.timeControlsManager = $injector.instantiate(TimeControlsManager);
         $scope.mapManager = MapManager;
-
+        $scope.model = { 'graticule': false };
         $scope.mapManager.loadMap({title: 'OpenStreetMap', type: 'OSM'});
 
         var server = {
