@@ -15,7 +15,7 @@
         'ui.bootstrap'
     ]);
 
-    //module.constant('environment', 'local');
+    module.constant('access_token', ACCESS_TOKEN);
 
     function sortByKey(array, key) {
         return array.sort(function (a, b) {
@@ -302,7 +302,7 @@
             canStyleWMS: true,
             host: SITE_URL,
             name: "era",
-            path: "/geoserver/"
+            path: "/geoserver"
         }
         $scope.loading = {};
 

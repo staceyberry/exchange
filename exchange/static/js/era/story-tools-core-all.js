@@ -23038,7 +23038,8 @@ exports.easingFunctions = {
     var module = angular.module('storytools.core.breadcrumbs_directive', []);
 
     module.directive('stBreadcrumbs',
-        ["breadcrumbsService", "MapManager", "StoryPinLayerManager", "limitToFilter", "$http", function(breadcrumbsService, MapManager, StoryPinLayerManager, limitToFilter, $http) {
+        ["breadcrumbsService", "MapManager", "StoryPinLayerManager", "limitToFilter", "$http", "$injector", function(breadcrumbsService, MapManager, StoryPinLayerManager, limitToFilter, $http, $injector ) {
+            var access_token = $injector.has('access_token') ? $injector.get('access_token') : '';
             return {
                 replace: true,
                 scope: {},
@@ -23065,7 +23066,10 @@ exports.easingFunctions = {
                     };
 
                     scope.results = function(tailno) {
-                        var url = "/geoserver/wms?service=WFS&version=1.1.0&request=GetFeature&typename=geonode:ERAMAP_GPS_V&outputFormat=application/json&srsName=EPSG:3857&CQL_FILTER=TITLE%20like%20%27%25"+ tailno.toUpperCase() + "%25%27&PROPERTYNAME=TITLE";
+                        var url = "/geoserver/wms?service=WFS&version=1.1.0&request=GetFeature" +
+                            "&typename=geonode:ERAMAP_GPS_V&outputFormat=application/json" +
+                            "&srsName=EPSG:3857&access_token=" + access_token +
+                            "&CQL_FILTER=TITLE%20like%20%27%25"+ tailno.toUpperCase() + "%25%27&PROPERTYNAME=TITLE";
                         return $http.get(url).then(function(response){
                             var names = [];
                             for (var i = 0; i < response.data.features.length; i++) {
@@ -24397,6 +24401,9 @@ exports.easingFunctions = {
     if (times) {
       params.TIME = new Date(times.start || times[0]).toISOString();
     }
+
+    params.access_token = this.get('access_token');
+
     if (singleTile) {
       layer.setSource(new ol.source.ImageWMS({
         params: params,
@@ -24452,7 +24459,8 @@ exports.easingFunctions = {
 
   module.constant('EditableStoryLayer', EditableStoryLayer);
 
-  module.service('stAnnotateLayer', ["$rootScope", "$http", "$q", function($rootScope, $http, $q) {
+  module.service('stAnnotateLayer', ["$rootScope", "$http", "$q", "$injector", function($rootScope, $http, $q, $injector) {
+      var access_token = $injector.has('access_token') ? $injector.get('access_token') : '';
     return {
       loadCapabilities: function(storyLayer) {
         var request = 'GetCapabilities', service = 'WMS';
@@ -24464,6 +24472,9 @@ exports.easingFunctions = {
           url = url.replace('/geoserver', '/geoserver/' + parts[0] + '/' + parts[1]);
         }
         url = url.replace('http:', '');
+        var token = '?access_token=' + access_token;
+        url += token;
+
         $rootScope.$broadcast('layer-status', { name: storyLayer.get('name'),
           phase: 'capabilities',
           status: 'loading' });
@@ -24526,7 +24537,7 @@ exports.easingFunctions = {
           status: 'loading' });
         return $http({
           method: 'GET',
-          url: storyLayer.get('url').replace('http:', ''),
+          url: storyLayer.get('url').replace('http:', '') + '?access_token=' + access_token,
           params: {
             'SERVICE': service,
             'VERSION': '1.0.0',
@@ -24580,7 +24591,7 @@ exports.easingFunctions = {
           var me = this;
           return $http({
             method: 'GET',
-            url: storyLayer.get('path') + 'rest/layers/' + storyLayer.get('id') + '.json'
+            url: storyLayer.get('path') + 'rest/layers/' + storyLayer.get('id') + '.json' + '?access_token=' + access_token
           }).then(function(response) {
             storyLayer.set('styleName', response.data.layer.defaultStyle.name);
           }).catch(function(response){});
@@ -24592,7 +24603,7 @@ exports.easingFunctions = {
         var name = storyLayer.get('id');
         var cql = storyLayer.get('cql');
         var wfsUrl = storyLayer.get('url') + '?service=WFS&version=1.1.0&request=GetFeature&typename=' +
-            name + '&outputFormat=application/json' +
+            name + '&outputFormat=application/json' + '&access_token=' + access_token
             '&srsName=' + map.getView().getProjection().getCode();
 
         if (cql){
@@ -24758,8 +24769,10 @@ exports.easingFunctions = {
   });
 
   module.service('stEditableLayerBuilder', ["$q", "stAnnotateLayer", "stBaseLayerBuilder", "$injector", function($q, stAnnotateLayer, stBaseLayerBuilder, $injector) {
-    return {
+    var access_token = $injector.has('access_token') ? $injector.get('access_token') : '';
+      return {
       buildEditableLayer: function(data, map) {
+        data['access_token'] = access_token;
         var layer = new EditableStoryLayer(data);
         var deferred = $q.defer();
         var promises = [];

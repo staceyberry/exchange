@@ -51,9 +51,16 @@ def map_viewer(request, template='map_viewer.html'):
                                    'title': item['args'][0],})
                 except:
                     pass
+
+    if 'access_token' in request.session:
+        access_token = request.session['access_token']
+    else:
+        access_token = None
+
     return render_to_response(template, RequestContext(request, {
         'MAP_BASELAYERS': map_baselayers,
-        'SITEURL': settings.SITEURL[:-1]
+        'SITEURL': settings.SITEURL[:-1],
+        'ACCESS_TOKEN': access_token
     }))
 
 def get_pip_version(project):
