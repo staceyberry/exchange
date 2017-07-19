@@ -102,7 +102,6 @@
             sidebar.on('resizestart', createResizeOverlay);
             header.on('resizestart', createResizeOverlay);
             footer.on('resizestart', createResizeOverlay);
-
             sidebar.on('resizestop', function () {
                 mapFrame.css({
                     'left': sidebar.width(),
@@ -215,6 +214,10 @@
             header.resizable('disable');
             footer.resizable('disable');
             $('.footer-text').removeAttr('contenteditable');
+            $('iframe.maploom')[0].contentWindow.EDITABLE = false;
+            if ($('iframe.maploom')[0].contentWindow.$) {
+                $('iframe.maploom')[0].contentWindow.$('body').triggerHandler('editable', [false]);
+            }
         }
 
         function enableEdit() {
@@ -230,18 +233,25 @@
             header.resizable('enable');
             footer.resizable('enable');
             $('.footer-text').attr('contenteditable', true);
+            var mapWindow = $('iframe.maploom')[0].contentWindow;
+            mapWindow.EDITABLE = true;
+            if (mapWindow.$) {
+                mapWindow.$('body').triggerHandler('editable', [true]);
+            }
         }
 
         function persistChanges(id) {
             var reader;
-
+            var mapWindow = $('iframe.maploom')[0].contentWindow;
             function post() {
                 var params = {
                     'map_id': id,
                     'footer': $('.footer-text').text().trim(),
                     'selected_feature': JSON.stringify({featureID : currentFeature, layerID: currentLayer}),
                     'template': window.template,
-                    'positions': JSON.stringify(getPositions())
+                    'positions': JSON.stringify(getPositions()),
+                    'chart_layer': mapWindow.CHART_LAYER,
+                    'chart_attribute': mapWindow.CHART_ATTRIBUTE
                 };
 
                 if (reader) {
@@ -445,13 +455,18 @@
                 }
                 $('#footer').children()[0].innerText = data.footer;
                 window.template = data.template;
-                if (data.template === 'plain' || data.template === 'time-slider') {
+                if (data.template === 'plain' || data.template === 'time-slider' || data.template === 'chart') {
                     if (data.positions && data.positions !== '') {
                         setPositionAndSize(JSON.parse(data.positions), false);
                     } else {
                         setPositionAndSize(plainTemplateObject, false);
                     }
                 }
+                var mapWindow = $('iframe.maploom')[0].contentWindow;
+                mapWindow.CHART_LAYER = data.chart_layer;
+                mapWindow.CHART_ATTRIBUTE = data.chart_attribute;
+                mapWindow.TEMPLATE = data.template;
+                mapWindow.TEMPLATE = 'chart';
 
                 /*
                 if (data.selected_feature) {
@@ -477,6 +492,13 @@
                 window.template = 'time-slider';
                 setPositionAndSize(plainTemplateObject, true);
                 $('iframe.maploom')[0].contentWindow.$('body').triggerHandler('set-time-slider', [true]);
+            });
+            $('#chart-template').on('click', function () {
+                window.template = 'chart';
+                setPositionAndSize(plainTemplateObject, true);
+                var mapWindow = $('iframe.maploom')[0].contentWindow;
+                mapWindow.TEMPLATE = 'chart';
+                $('iframe.maploom')[0].contentWindow.$('body').triggerHandler('enable-chart', [true]);
             });
         }
     }
