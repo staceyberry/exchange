@@ -23065,7 +23065,7 @@ exports.easingFunctions = {
                     };
 
                     scope.results = function(tailno) {
-                        var url = "/geoserver/wms?service=WFS&version=1.1.0&request=GetFeature&typename=geonode:ERAMAP_AIRCRAFT_BASE_MV&outputFormat=application/json&srsName=EPSG:3857&CQL_FILTER=TITLE%20like%20%27%25"+ tailno.toUpperCase() + "%25%27&PROPERTYNAME=TITLE";
+                        var url = "/geoserver/wms?service=WFS&version=1.1.0&request=GetFeature&typename=geonode:ERAMAP_GPS_V&outputFormat=application/json&srsName=EPSG:3857&CQL_FILTER=TITLE%20like%20%27%25"+ tailno.toUpperCase() + "%25%27&PROPERTYNAME=TITLE";
                         return $http.get(url).then(function(response){
                             var names = [];
                             for (var i = 0; i < response.data.features.length; i++) {
