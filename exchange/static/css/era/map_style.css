@@ -176,7 +176,6 @@ html, body {
         }
 
         div.navbar > st-playback-controls > button i {
-            font-size: 12px;
             color: white;
             background-color: transparent;
         }
