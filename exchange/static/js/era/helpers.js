@@ -107,7 +107,7 @@
             var lineStyle = new ol.style.Style({
                 geometry: geometries[3],
                 stroke: new ol.style.Stroke({
-                    color: '#0000cd',
+                    color: '#FF00FF',
                     width: 2
                 })
             });
