@@ -202,7 +202,7 @@
             }
             var workspace = 'geonode';
 
-            var url = _options.server.path + '/wms';
+            var url = _options.server.path + '/ows';
             var id = workspace + ":" + name;
             var options = {
                 id: id,

@@ -25,6 +25,8 @@ from geonode.maps.views import _resolve_map
 from pip._vendor import pkg_resources
 from .utils import get_records
 from geopy.geocoders import Nominatim
+from oauthlib.common import generate_token
+from oauth2_provider.models import AccessToken, get_application_model
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,17 @@ def map_viewer(request, template='map_viewer.html'):
 
     if 'access_token' in request.session:
         access_token = request.session['access_token']
+    elif request.user and request.user.is_authenticated():
+        Application = get_application_model()
+        app = Application.objects.get(name="GeoServer")
+
+        token = generate_token()
+
+        AccessToken.objects.get_or_create(user=request.user,
+                                          application=app,
+                                          expires=datetime.datetime.now() + datetime.timedelta(hours=8),
+                                          token=token)
+        access_token = token
     else:
         access_token = None
 
