@@ -24620,7 +24620,8 @@ exports.easingFunctions = {
         }).then(function(response) {
           var layer = storyLayer.getLayer();
           var filter = storyLayer.get('filter');
-          var features = new ol.format.GeoJSON().readFeatures(response.data);
+          var features = new ol.format.GeoJSON().readFeatures(response.data,
+              { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
 
           if (filter) {
             features = filter(features);
