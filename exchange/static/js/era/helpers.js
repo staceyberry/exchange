@@ -23,6 +23,7 @@
 
             if (d_to_d) {
                 lineString = new ol.geom.LineString(feature.get('DEPARTURE_TO_DESTINATION_GEOM').coordinates);
+                lineString.transform('EPSG:4326', 'EPSG:3857');
             }
 
             var rangeInNauticalMiles = feature.get('REMAININGFUELMILES');
