@@ -397,14 +397,22 @@
                 }
             }
 
+            function createMediaObject(url) {
+                if (url.indexOf('.mp4') !== -1) {
+                    return '<div><video style="width: 100%; height: 100%;" controls src="' + url + '"/></div>';
+                } else {
+                    return '<div><img src="' + url + '"/></div>';
+                }
+            }
+
             var carousel = $('#sidebar-carousel');
             carousel.slick('removeSlide', null, null, true);
             $.each(image_media, function (key, val) {
-                var img = '<div><img src="' + val + '"/></div>';
+                var img = createMediaObject(val);
                 carousel.slick('slickAdd', img);
             });
             $.each(video_media, function (key, val) {
-                var vid = '<div><video style="width: 100%; height: 100%;" controls src="' + val + '"/></div>';
+                var vid = createMediaObject(val);
                 carousel.slick('slickAdd', vid);
             });
         }
