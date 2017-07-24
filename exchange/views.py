@@ -64,7 +64,7 @@ def map_viewer(request, template='map_viewer.html'):
 
         AccessToken.objects.get_or_create(user=request.user,
                                           application=app,
-                                          expires=datetime.datetime.now() + datetime.timedelta(hours=8),
+                                          expires=datetime.datetime.now() + datetime.timedelta(days=3),
                                           token=token)
         access_token = token
     else:
