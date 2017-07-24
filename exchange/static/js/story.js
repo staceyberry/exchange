@@ -466,7 +466,6 @@
                 mapWindow.CHART_LAYER = data.chart_layer;
                 mapWindow.CHART_ATTRIBUTE = data.chart_attribute;
                 mapWindow.TEMPLATE = data.template;
-                mapWindow.TEMPLATE = 'chart';
 
                 /*
                 if (data.selected_feature) {
