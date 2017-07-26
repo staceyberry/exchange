@@ -308,7 +308,7 @@
 
         var cqlFilter;
         var filters = [];
-        var ORG;//set by django
+ 
         if (ORG && ORG != "0" && ORG != "245") {
             var orgs = ORG.split(',');
 
