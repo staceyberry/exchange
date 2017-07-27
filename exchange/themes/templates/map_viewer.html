@@ -75,6 +75,7 @@
                                                 <i class="material-icons " ng-class="{'visible': !layer.get('visibility'), 'hidden': layer.get('visibility')}">location_off</i>
                                             </a>
                                             <span class="new badge" data-badge-caption="">{{ layer.get('features').length }}</span>
+                                            <span ng-hide="!errors[layer.get('name')]" class="new badge red" data-badge-caption="...">Unavailable</span>
                                             <span ng-hide="!loading[layer.get('name')]" class="new badge" data-badge-caption="...">Loading</span>
                                             {{layer.get('title')}}
                                         </div>

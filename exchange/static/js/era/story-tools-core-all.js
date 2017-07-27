@@ -24618,26 +24618,40 @@ exports.easingFunctions = {
           method: 'GET',
           url: wfsUrl
         }).then(function(response) {
-          var layer = storyLayer.getLayer();
-          var filter = storyLayer.get('filter');
-          var features = new ol.format.GeoJSON().readFeatures(response.data,
-              { dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
 
-          if (filter) {
-            features = filter(features);
-          }
+            if(response.data.indexOf('<ows:ExceptionReport') > 0 ) {
 
-          storyLayer.set('features', features);
+                var layer = storyLayer.getLayer();
+                var filter = storyLayer.get('filter');
+                var features = new ol.format.GeoJSON().readFeatures(response.data,
+                    {dataProjection: 'EPSG:4326', featureProjection: 'EPSG:3857'});
 
-          if(layer.getSource() instanceof ol.source.Cluster) {
-            layer.getSource().getSource().clear(true);
-            layer.getSource().getSource().addFeatures(features);
-          }else if(layer.getSource() instanceof ol.source.Vector){
-            layer.getSource().clear(true);
-            layer.getSource().addFeatures(features);
-          }
+                if (filter) {
+                    features = filter(features);
+                }
 
-          $rootScope.$broadcast('layer-status', { name: storyLayer.get('name'), phase: 'features', status: 'done' });
+                storyLayer.set('features', features);
+
+                if (layer.getSource() instanceof ol.source.Cluster) {
+                    layer.getSource().getSource().clear(true);
+                    layer.getSource().getSource().addFeatures(features);
+                } else if (layer.getSource() instanceof ol.source.Vector) {
+                    layer.getSource().clear(true);
+                    layer.getSource().addFeatures(features);
+                }
+
+                $rootScope.$broadcast('layer-status', {
+                    name: storyLayer.get('name'),
+                    phase: 'features',
+                    status: 'done'
+                });
+            } else {
+                $rootScope.$broadcast('layer-status', {
+                    name: storyLayer.get('name'),
+                    phase: 'features',
+                    status: 'error'
+                });
+            }
 
         }).catch(function(response){});
       }
@@ -24833,8 +24847,8 @@ exports.easingFunctions = {
 
   module.service('stStoryMapBaseBuilder', ["$rootScope", "$compile", "stBaseLayerBuilder", function($rootScope, $compile, stBaseLayerBuilder) {
     return {
-      defaultMap: function(storymap) {
-        storymap.getMap().setView(new ol.View({center: [0, 0], zoom: 3, minZoom: 3, maxZoom: 16}));
+      defaultMap: function(storymap, center, zoom) {
+        storymap.getMap().setView(new ol.View({center: center || [0, 0], zoom: zoom || 3, minZoom: 3, maxZoom: 16}));
         this.setBaseLayer(storymap, {
           title: 'OpenStreetMap',
           type: 'OSM',

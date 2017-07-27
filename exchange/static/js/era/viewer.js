@@ -243,8 +243,8 @@
 
                     });
                 } else {
-                    var center = [-10449764.649391213, 3406143.1723930337]
-                    self.storyMap.animateCenterAndZoom(center, 7);
+                   // var center = [-10449764.649391213, 3406143.1723930337]
+                   // self.storyMap.animateCenterAndZoom(center, 7);
                 }
                 return layer;
             });
@@ -253,7 +253,7 @@
         this.loadMap = function (options) {
             options = options || {};
 
-            stStoryMapBaseBuilder.defaultMap(this.storyMap);
+            stStoryMapBaseBuilder.defaultMap(this.storyMap, [-10449764.649391213, 3406143.1723930337], 7);
 
             // display popup on hover
             self.storyMap.getMap().on('pointermove', function (evt) {
@@ -305,6 +305,7 @@
             path: "/geoserver"
         }
         $scope.loading = {};
+        $scope.errors = {};
 
         var cqlFilter;
         var filters = [];
@@ -419,6 +420,7 @@
             }, 60000);
         }, errorCallBack).finally(function () {
             $scope.loading = {};
+            $scope.errors = {};
         });
 
         $scope.$watch('model.graticule', function () {
@@ -433,8 +435,14 @@
             $log.debug("Layer Status: ", args.name, args.phase, args.status);
             if (args.phase === 'features') {
                 if (args.status === 'loading') {
+                    $scope.errors[args.name] = false;
                     $scope.loading[args.name] = true;
-                } else {
+                }
+                else if(args.status === 'error') {
+                    $scope.errors[args.name] = true;
+                    $scope.loading[args.name] = false;
+                }
+                else {
                     $timeout(function () {
                         $scope.loading[args.name] = false;
                     }, 2000);
