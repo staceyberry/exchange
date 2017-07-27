@@ -24619,7 +24619,7 @@ exports.easingFunctions = {
           url: wfsUrl
         }).then(function(response) {
 
-            if(response.data.indexOf('<ows:ExceptionReport') > 0 ) {
+            if((typeof response.data) != 'string') {
 
                 var layer = storyLayer.getLayer();
                 var filter = storyLayer.get('filter');
