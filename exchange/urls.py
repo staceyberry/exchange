@@ -39,6 +39,8 @@ urlpatterns = patterns(
     url(r'^/?$', views.home_screen, name='home'),
     url(r'^layers/(?P<layername>[^/]*)/metadata_detail$',
         views.layer_metadata_detail, name='layer_metadata_detail'),
+    url(r'^layers/(?P<layername>[^/]*)/bulk_edit$',
+        views.layer_bulk_edit, name='layer_bulk_edit'),
     url(r'^storyPersist$', views.story, name='story'),
     url(r'^maps/(?P<mapid>[^/]*)/metadata_detail$', views.map_metadata_detail,
         name='map_metadata_detail'),

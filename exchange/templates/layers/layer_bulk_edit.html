@@ -1,0 +1,271 @@
+{% extends "layers/layer_base.html" %}
+{% load i18n %}
+{% load dialogos_tags %}
+{% load agon_ratings_tags %}
+{% load bootstrap_tags %}
+{% load pagination_tags %}
+{% load url from future %}
+{% load base_tags %}
+{% load guardian_tags %}
+
+{% block title %}{{ resource.title|default:resource.typename }} — {{ block.super }}{% endblock %}
+
+{% block head %}
+    {% include "layers/layer_ol3_map.html" %}
+    {{ block.super }}
+{% endblock %}
+
+
+{% block body_class %}layers{% endblock %}
+
+{% block body_outer %}
+    <div class="page-header">
+        <h2 class="page-title">{{ resource.title|default:resource.typename }}</h2>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+
+            <div id="embedded_map" class="mrg-btm">
+                <div id="preview_map"></div>
+            </div>
+
+            <div class="tab-content">
+                <button id="add-point" class="btn"> Select Point</button>
+                <div>
+                    <span id="location"></span>
+                </div>
+                <form>
+
+                <table class="table table-striped table-bordered table-condensed">
+                    <thead>
+                    <tr>
+                        <th> Attribute</th>
+                        <th> Value</th>
+                    </tr>
+                    </thead>
+                    <tbody class="attribute-fields">
+                    {# This orders it by the custom ordering if available, otherwise whatever the server returns #}
+                    {% for attribute in resource.attributes|dictsort:"display_order" %}
+                        {% if attribute.visible %}
+                            <tr>
+                                <td>
+                                    {% if attribute.attribute_label %}
+                                        {{ attribute.attribute_label }}
+                                    {% else %}
+                                        {{ attribute.attribute }}
+                                    {% endif %}
+                                    {% if attribute.required %}
+                                        *
+                                    {% endif %}
+                                </td>
+                                <td class="form-group">
+                                    {% if attribute.attribute_type == "xsd:string" %}
+                                        <input data-name="{{ attribute.attribute }}" required="{{ attribute.required|lower }}" />
+                                    {% elif attribute.attribute_type == "xsd:int" or attribute.attribute_type == "xsd:double" %}
+                                        <input data-name="{{ attribute.attribute }}" required="{{attribute.required|lower}}" type="number" />
+                                    {% elif attribute.attribute_type == "xsd:dateTime" %}
+                                        <div class="input-group date date-picker">
+                                            <input data-name="{{ attribute.attribute }}" required="{{ attribute.required|lower }}" class="form-control input-sm form-control">
+                                            <span class="input-group-addon">
+                                                <span class="fa-calendar fa"></span>
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+                </form>
+            </div>
+            <div>
+                <button id="persist" class="btn btn-primary disabled"> Add Data</button>
+            </div>
+            <div>
+                <span id="results"></span>
+            </div>
+        </div>
+    </div> <!-- row -->
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        var selectedLocation;
+
+        document.addEventListener("DOMContentLoaded", function (event) {
+            $('#preview_map').height(200);
+            $('.attribute-fields input').change(isValidForm);
+            MAP.updateSize();
+            var pickerOptions = {
+                format: 'YYYY-MM-DDTHH:mm:ssZ',
+                pickDate: true,
+                pickTime: true,
+                language: 'en',
+                icons: {
+                    time: 'fa fa-clock-o',
+                    date: 'fa fa-calendar',
+                    up: 'fa fa-chevron-up',
+                    down: 'fa fa-chevron-down'
+                }
+            };
+            $('.date-picker').datetimepicker(pickerOptions);
+
+
+            var fill = new ol.style.Fill({
+                color: 'rgba(51, 153, 204,0.9)'
+            });
+            var stroke = new ol.style.Stroke({
+                color: '#1919FF',
+                width: 1.5
+            });
+            var style = [
+                new ol.style.Style({
+                    image: new ol.style.Circle({
+                        fill: fill,
+                        stroke: stroke,
+                        radius: 7
+                    }),
+                    fill: fill,
+                    stroke: stroke
+                })
+            ];
+            var vectorSource = new ol.source.Vector();
+            var vectorLayer = new ol.layer.Vector({
+                source: vectorSource, metadata: {
+                    bbox: {crs: MAP.getView().getProjection()}
+                },
+                style: style
+            });
+            MAP.addLayer(vectorLayer);
+            var drawControl = new ol.interaction.Draw({
+                source: vectorSource,
+                type: 'Point'
+            });
+            var mapProjection = '{{ crs }}';
+            drawControl.on('drawend', function (drawEvt) {
+                vectorSource.addFeature(drawEvt.feature);
+
+                var location = drawEvt.feature.clone().getGeometry();
+                location = location.transform( new ol.proj.Projection({code: mapProjection}), new ol.proj.Projection({code: 'EPSG:4326'}));
+                selectedLocation = location;
+                MAP.removeInteraction(drawControl);
+                return false;
+            });
+
+
+            $('#add-point').click(function () {
+                MAP.addInteraction(drawControl);
+            });
+
+            $('#persist').click(function () {
+                if (isValidForm()) {
+                    var fields = {};
+                    $('.attribute-fields input').each(function(){
+                        var elem = $(this);
+                        var fieldName = elem.attr('data-name');
+                        var fieldValue = elem.val();
+                        fields[fieldName] = fieldValue;
+                    });
+
+                    var feature = new ol.Feature();
+                    feature.setProperties(fields);
+                    feature.setGeometry(selectedLocation);
+                    persist(feature);
+                }
+            });
+        });
+
+        function isValidForm(){
+            var valid = true;
+            $('.attribute-fields [required=true]').each(function() {
+                var elem = $(this);
+                if (valid) {
+                    valid = elem.val() !== '';
+                }
+            });
+            valid = valid && selectedLocation;
+
+            if (valid) {
+                $('#persist').removeClass('disabled');
+            } else {
+                $('#persist').addClass('disabled');
+            }
+
+            return valid;
+        }
+
+        function persist(feature) {
+            var propertyXmlPartial = '';
+            var featureGML;
+            var coordsCode = 'EPSG:4326';
+            var newPos = feature.getGeometry().getCoordinates();
+            console.log('geom', feature.getGeometryName());
+            // Construct the property change to put in the partial to send in the post request
+            var geometryName = 'the_geom';
+            featureGML = '<gml:Point xmlns:gml="http://www.opengis.net/gml" srsName="' +
+                coordsCode + '">' +
+                '<gml:coordinates decimal="." cs="," ts=" ">' +
+                newPos[0] + ',' + newPos[1] +
+                '</gml:coordinates></gml:Point>';
+
+            propertyXmlPartial += '<feature:' + geometryName + '>' + featureGML + '</feature:' +
+                geometryName + '>';
+
+            $.each(feature.getProperties(), function (property, value) {
+                if (value === '') {
+                    value = null;
+                }
+                if (property !== feature.getGeometryName())
+                {
+                    propertyXmlPartial += '<feature:' + property + '>' + (value === null ? '' : value) +
+                        '</feature:' + property + '>';
+                }
+            });
+            issueWFSPost(propertyXmlPartial);
+        }
+
+        function issueWFSPost(partial) {
+            var wfsRequestTypePartial;
+            var commitMsg;
+            var featureType = '{{ resource.title }}';
+            var workspaceURL = '{{ resource.workspace }}';
+
+            commitMsg = 'added_1_feature';
+            wfsRequestTypePartial = '<wfs:Insert handle="' + commitMsg +
+                '"><feature:' + featureType + ' xmlns:feature="' + workspaceURL + '">' +
+                partial + '</feature:' + featureType + '></wfs:Insert>';
+
+            var wfsRequestData = '<?xml version="1.0" encoding="UTF-8"?> ' +
+                '<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs" ' +
+                'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ' +
+                'service="WFS" version="1.0.0" ' +
+                'handle="' + commitMsg + '" ' +
+                'xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.0.0/wfs.xsd"> ' +
+                wfsRequestTypePartial +
+                '</wfs:Transaction>';
+
+            var url = '{{ resource.ows_url }}';
+            var server = url.substring(0, url.indexOf('/wms'));
+            var wfsurl =  server + '/' + workspaceURL + '/wfs?service=wfs&version=1.1.0&request=Transaction';
+
+            $.ajax({
+                url: wfsurl,
+                data: wfsRequestData,
+                type: 'POST',
+                contentType: "text/xml",
+                dataType: "text",
+                success : function(resp) {
+                    console.log(resp);
+                    $('#results').text('Success');
+                },
+                error : function (xhr, ajaxOptions, thrownError){
+                    console.log(xhr.status);
+                    console.log(thrownError);
+                    $('#results').text('Failure');
+                }
+            });
+        }
+    </script>
+{% endblock extra_script %}

@@ -19,6 +19,16 @@ import logging
 import base64
 import uuid
 from django.core.files.base import ContentFile
+from geonode.layers.models import Layer
+from geonode.utils import GXPLayer, GXPMap
+from geonode.geoserver.helpers import gs_catalog
+from geonode.maps.models import Map
+from django.db.models import F
+
+try:
+    import json
+except ImportError:
+    from django.utils import simplejson as json
 
 
 logger = logging.getLogger(__name__)
@@ -90,6 +100,145 @@ def layer_metadata_detail(request, layername,
         "layer": layer,
         'SITEURL': settings.SITEURL[:-1]
     }))
+
+
+def layer_bulk_edit(request, layername,
+                          template='layers/layer_bulk_edit.html'):
+    layer = _resolve_layer(
+        request,
+        layername,
+        'base.view_resourcebase',
+        _PERMISSION_MSG_METADATA)
+
+    # assert False, str(layer_bbox)
+    config = layer.attribute_config()
+
+    # Add required parameters for GXP lazy-loading
+    layer_bbox = layer.bbox
+    bbox = [float(coord) for coord in list(layer_bbox[0:4])]
+    config["srs"] = getattr(settings, 'DEFAULT_MAP_CRS', 'EPSG:900913')
+    # config["bbox"] = bbox if config["srs"] != 'EPSG:900913' \
+    #     else llbbox_to_mercator([float(coord) for coord in bbox])
+    config["title"] = layer.title
+    config["queryable"] = True
+
+    if layer.storeType == "remoteStore":
+        service = layer.service
+        source_params = {
+            "ptype": service.ptype,
+            "remote": True,
+            "url": service.base_url,
+            "name": service.name}
+        maplayer = GXPLayer(
+            name=layer.typename,
+            ows_url=layer.ows_url,
+            layer_params=json.dumps(config),
+            source_params=json.dumps(source_params))
+    else:
+        maplayer = GXPLayer(
+            name=layer.typename,
+            ows_url=layer.ows_url,
+            layer_params=json.dumps(config))
+
+    # Update count for popularity ranking,
+    # but do not includes admins or resource owners
+    if request.user != layer.owner and not request.user.is_superuser:
+        Layer.objects.filter(
+            id=layer.id).update(popular_count=F('popular_count') + 1)
+
+    # center/zoom don't matter; the viewer will center on the layer bounds
+    map_obj = GXPMap(projection=getattr(settings, 'DEFAULT_MAP_CRS', 'EPSG:900913'))
+
+    metadata = layer.link_set.metadata().filter(
+        name__in=settings.DOWNLOAD_FORMATS_METADATA)
+
+    granules = None
+    all_granules = None
+    filter = None
+    if layer.is_mosaic:
+        try:
+            cat = gs_catalog
+            cat._cache.clear()
+            store = cat.get_store(layer.name)
+            coverages = cat.mosaic_coverages(store)
+
+            filter = None
+            try:
+                if request.GET["filter"]:
+                    filter = request.GET["filter"]
+            except:
+                pass
+
+            offset = 10 * (request.page - 1)
+            granules = cat.mosaic_granules(coverages['coverages']['coverage'][0]['name'], store, limit=10,
+                                           offset=offset, filter=filter)
+            all_granules = cat.mosaic_granules(coverages['coverages']['coverage'][0]['name'], store, filter=filter)
+        except:
+            granules = {"features": []}
+            all_granules = {"features": []}
+
+    context_dict = {
+        "resource": layer,
+        # 'perms_list': get_perms(request.user, layer.get_self_resource()),
+        # "permissions_json": _perms_info_json(layer),
+        # "documents": get_related_documents(layer),
+        "metadata": metadata,
+        "is_layer": True,
+        "wps_enabled": settings.OGC_SERVER['default']['WPS_ENABLED'],
+        "granules": granules,
+        "all_granules": all_granules,
+        "filter": filter,
+    }
+
+    if 'access_token' in request.session:
+        access_token = request.session['access_token']
+    else:
+        u = uuid.uuid1()
+        access_token = u.hex
+
+    # context_dict["viewer"] = json.dumps(
+    #     map_obj.viewer_json(request.user, access_token, *(default_map_config(request)[1] + [maplayer])))
+
+    context_dict["preview"] = getattr(
+        settings,
+        'LAYER_PREVIEW_LIBRARY',
+        'leaflet')
+    context_dict["crs"] = getattr(
+        settings,
+        'DEFAULT_MAP_CRS',
+        'EPSG:900913')
+
+    context_dict["available_renderers"] = Map._meta.get_field('renderer').choices
+
+    if layer.storeType == 'dataStore':
+        links = layer.link_set.download().filter(
+            name__in=settings.DOWNLOAD_FORMATS_VECTOR)
+    else:
+        links = layer.link_set.download().filter(
+            name__in=settings.DOWNLOAD_FORMATS_RASTER)
+    links_view = [item for idx, item in enumerate(links) if
+                  item.url and 'wms' in item.url or 'gwc' in item.url]
+    links_download = [item for idx, item in enumerate(links) if
+                      item.url and 'wms' not in item.url and 'gwc' not in item.url]
+    for item in links_view:
+        if item.url and access_token:
+            item.url = "%s&access_token=%s" % (item.url, access_token)
+    for item in links_download:
+        if item.url and access_token:
+            item.url = "%s&access_token=%s" % (item.url, access_token)
+
+    if request.user.has_perm('view_resourcebase', layer.get_self_resource()):
+        context_dict["links"] = links_view
+    if request.user.has_perm('download_resourcebase', layer.get_self_resource()):
+        if layer.storeType == 'dataStore':
+            links = layer.link_set.download().filter(
+                name__in=settings.DOWNLOAD_FORMATS_VECTOR)
+        else:
+            links = layer.link_set.download().filter(
+                name__in=settings.DOWNLOAD_FORMATS_RASTER)
+        context_dict["links_download"] = links_download
+
+    return render_to_response(template, RequestContext(request, context_dict))
 
 
 def map_metadata_detail(request, mapid,
