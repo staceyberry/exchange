@@ -463,7 +463,7 @@
                 }
                 $('#footer').children()[0].innerText = data.footer;
                 window.template = data.template;
-                if (data.template === 'plain' || data.template === 'time-slider' || data.template === 'chart') {
+                if (data.template === 'plain' || data.template === 'time-slider' || data.template === 'chart' || data.template === 'pie') {
                     if (data.positions && data.positions !== '') {
                         setPositionAndSize(JSON.parse(data.positions), false);
                     } else {
@@ -506,6 +506,13 @@
                 var mapWindow = $('iframe.maploom')[0].contentWindow;
                 mapWindow.TEMPLATE = 'chart';
                 $('iframe.maploom')[0].contentWindow.$('body').triggerHandler('enable-chart', [true]);
+            });
+             $('#chart-pie-template').on('click', function () {
+                window.template = 'pie';
+                setPositionAndSize(plainTemplateObject, true);
+                var mapWindow = $('iframe.maploom')[0].contentWindow;
+                mapWindow.TEMPLATE = 'pie';
+                $('iframe.maploom')[0].contentWindow.$('body').triggerHandler('enable-pie', [true]);
             });
         }
     }
