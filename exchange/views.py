@@ -101,6 +101,40 @@ def layer_metadata_detail(request, layername,
         'SITEURL': settings.SITEURL[:-1]
     }))
 
+def published_map(request, mapid, snapshot=None, template='maps/published_map.html'):
+    """
+    The view that returns the map composer opened to
+    the map with the given map ID.
+    """
+    map_obj = _resolve_map(request, mapid, '', '')
+
+    if map_obj.public != True:
+        return None
+
+    if 'access_token' in request.session:
+        access_token = request.session['access_token']
+    else:
+        access_token = None
+
+    if snapshot is None:
+        config = map_obj.viewer_json(request.user, access_token)
+    else:
+        config = snapshot_config(snapshot, map_obj, request.user, access_token)
+
+    preview = map_obj.renderer
+
+    if preview is None:
+        preview = getattr(
+            settings,
+            'LAYER_PREVIEW_LIBRARY',
+            '')
+
+    return render_to_response(template, RequestContext(request, {
+        'published_view': True,
+        'config': json.dumps(config),
+        'map': map_obj,
+        'preview': preview
+    }))
 
 def layer_bulk_edit(request, layername,
                           template='layers/layer_bulk_edit.html'):

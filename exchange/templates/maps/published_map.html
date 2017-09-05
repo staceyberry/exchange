@@ -1,0 +1,43 @@
+{% extends "site_base.html" %}
+
+{% load i18n %}
+{% load base_tags %}
+
+{% block title %} {% trans "Map" %} - {{ block.super }} {% endblock %}
+
+{% block head %}
+	{% if preview == 'geoext' %}
+		{% include 'maps/map_geoexplorer.js' %}
+	{% elif preview == 'react' %}
+		{% include 'geonode-client/map_view.html' %}
+    {% elif preview == 'maploom' %}
+        <link rel="stylesheet" href="{{STATIC_URL}}css/story-style.css">
+        <iframe src="{% if map %}{% url 'maploom-map-published-view' map.id %}{% else %}{% url 'maploom-map-new' %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}{% endif %}" allowFullScreen="true" scrolling="auto" class="maploom"></iframe>
+	{% else %}
+		{% include 'maps/map_geoexplorer.js' %}
+	{% endif %}
+	{{ block.super }}
+{% endblock %}
+
+{% block body_outer %}
+    {% include 'maps/map_story_header.html' %}
+{% endblock %}
+
+{% block footer %}
+    {% include 'maps/map_story_footer.html' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script>
+        map_id = {{ map.id }};
+        renderer = '{{ preview }}';
+    </script>
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/jquery-ui.min.css"/>
+    <script type="text/javascript" src="{{STATIC_URL}}js/jquery-ui.min.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/slick.css"/>
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/slick-theme.css"/>
+    <script type="text/javascript" src="{{STATIC_URL}}js/slick.min.js"></script>
+
+    <script type="text/javascript" src="{{STATIC_URL}}js/story.js"></script>
+{% endblock %}

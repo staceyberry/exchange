@@ -201,7 +201,7 @@ ADDITIONAL_AUTH_EXEMPT_URLS = os.environ.get(
 if isinstance(ADDITIONAL_AUTH_EXEMPT_URLS, str):
     ADDITIONAL_AUTH_EXEMPT_URLS = tuple(map(str.strip, ADDITIONAL_AUTH_EXEMPT_URLS.split(',')))
 
-AUTH_EXEMPT_URLS = ('/complete/*', '/login/*', '/api/o/*', '/api/roles', '/api/adminRole', '/api/users', '/o/token/*', '/o/authorize/*',) + ADDITIONAL_AUTH_EXEMPT_URLS
+AUTH_EXEMPT_URLS = ('/published_map/*', '/storyPersist/*', '/maploom/maps/*', '/complete/*', '/login/*', '/api/o/*', '/api/roles', '/api/adminRole', '/api/users', '/o/token/*', '/o/authorize/*',) + ADDITIONAL_AUTH_EXEMPT_URLS
 
 # geoserver settings
 GEOSERVER_URL = os.environ.get(

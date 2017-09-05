@@ -9,9 +9,11 @@
             <div class="title ellipsis">{{ map.title }}</div>
             <div class="description ellipsis">{{ map.abstract }}</div>
         </div>
-        <div class="edit-toggle" style="position: fixed; right: 0px; top: 55px;">
-            <button class="btn" id="edit-template-btn"> <span class="fa fa-pencil"></span> </button>
-        </div>
+        {% if published_view != True %}
+            <div class="edit-toggle" style="position: fixed; right: 0px; top: 55px;">
+                <button class="btn" id="edit-template-btn"> <span class="fa fa-pencil"></span> </button>
+            </div>
+        {% endif %}
     </div>
 
 

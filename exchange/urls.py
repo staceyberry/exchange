@@ -42,6 +42,10 @@ urlpatterns = patterns(
     url(r'^layers/(?P<layername>[^/]*)/bulk_edit$',
         views.layer_bulk_edit, name='layer_bulk_edit'),
     url(r'^storyPersist$', views.story, name='story'),
+    url(r'^published_map/(?P<mapid>[^/]*)$', views.published_map,
+        name='published_map'),
+    url(r'^maploom/maps/(?P<mapid>\d+)/viewPublished', views.published_map,
+        {'template': 'maps/maploom.html'}, name='maploom-map-published-view'),
     url(r'^maps/(?P<mapid>[^/]*)/metadata_detail$', views.map_metadata_detail,
         name='map_metadata_detail'),
     url(r'^wfsproxy/', views.geoserver_reverse_proxy,
@@ -104,8 +108,8 @@ if settings.ES_UNIFIED_SEARCH:
     urlpatterns += [url(r'^api/(?P<resourcetype>registry)/search/$',
                         views.unified_elastic_search,
                         name='unified_elastic_search')]
-    urlpatterns += [url(r'^autocomplete', 
-                        views.empty_page, 
+    urlpatterns += [url(r'^autocomplete',
+                        views.empty_page,
                         name='autocomplete_override')]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
