@@ -24,9 +24,9 @@
     <h1>Search for Content</h1>
     <div class="search">
       <form id="search" action="/search/">
-        <span class="fa fa-search fa-2x"></span>
+        <a href="#" onclick="$('.search').find('#search').submit();"><span class="fa fa-search fa-2x"></span></a>
 
-        <input id="search_input" type="text" placeholder="Search" class="form-control" name="q">
+        <input id="search_input" type="text" placeholder="Search" class="form-control" name="q"></input>
 
       </form>
     </div>
@@ -67,8 +67,16 @@
       <div ng-app="featured">
         <div ng-repeat="item in featured | limitTo:4">
           <div class="col-md-3">
-            <a href="{{ item.detail_url }}"><img ng-src="{{ item.thumbnail_url }}" /></a>
-            <h4>{{ item.title | limitTo: 20 }}{{item.title.length > 20 ? '...' : ''}}</h4>
+            <a ng-if="item.detail_url.indexOf('/maps/') > -1" href="{{ item.detail_url }}/view">
+              <img class="thumbnail" src="/thumbnails{{ item.detail_url }}" />
+            </a>
+            <a ng-if="item.detail_url.indexOf('/layers/') > -1" href="{% endverbatim %}{% url "new_map" %}?layer={% verbatim %}{{ item.detail_url.substring(8) }}">
+              <img class="thumbnail" src="/thumbnails{{ item.detail_url }}" />
+            </a>
+            <a ng-if="item.detail_url.indexOf('/documents/') > -1" href="{{ item.detail_url }}">
+              <img class="thumbnail" src="/thumbnails{{ item.detail_url }}" />
+            </a>
+            <h5>{{ item.title | limitTo: 20 }}{{item.title.length > 20 ? '...' : ''}}</h5>
           </div>
         </div>
       </div>
@@ -93,7 +101,7 @@
   (function(){
     var module = angular.module('featured', []);
     module.run(function($http, $rootScope){
-      $http.get(FEATURED_URL).success(function(data){
+      $http.get(FEATURED_URL).then(function(data){
         $rootScope.featured = data.objects;
         document.getElementById('showcase').style.display = 'block';
       });

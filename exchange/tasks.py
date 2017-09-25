@@ -1,11 +1,10 @@
-from urlparse import urljoin
 from celery.task import task
 from celery.utils.log import get_task_logger
-from django.conf import settings
-import requests
-from lxml import etree
-
 from exchange.core.models import CSWRecord
+from geonode.catalogue import get_catalogue
+from xml.sax.saxutils import escape
+from geonode.services.models import Service
+import datetime
 
 logger = get_task_logger(__name__)
 
@@ -14,125 +13,183 @@ class UpstreamServiceImpairment(Exception):
     pass
 
 
+class Record(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+
 @task(
     bind=True,
     max_retries=1,
 )
-def create_new_csw(self, record_id):
+def create_record(self, id):
+
+    scheme_choices = (('ESRI:AIMS--http-get-map', 'MapServer'),
+                      ('ESRI:AIMS--http-get-feature', 'FeatureServer'),
+                      ('ESRI:AIMS--http-get-image', 'ImageServer'),
+                      ('WWW:LINK-1.0-http--json', 'JSON'),
+                      ('OGC:KML', 'KML'),
+                      ('WWW:LINK-1.0-http--rss', 'RSS'),
+                      ('WWW:DOWNLOAD', 'SHAPE'),
+                      ('WWW:LINK-1.0-http--soap', 'SOAP'),
+                      ('OGC:WCS', 'WCS'),
+                      ('OGC:WFS', 'WFS'),
+                      ('OGC:CS-W', 'CSW'),
+                      ('OGC:WMS', 'WMS'),
+                      ('OGC:WPS', 'WPS'))
+
+
+    def build_service_url(service, type):
+        url = service.base_url;
+        if type == 'WMSServer':
+            url = url.replace('rest/services', 'services')
+            url += 'WMSServer?request=GetCapabilities&amp;service=WMS'
+        elif type == 'KmlServer':
+            url += 'generateKml';
+        elif type == 'FeatureServer':
+            url = url.replace('MapServer', 'FeatureServer')
+        elif type == 'WFSServer':
+            url = url.replace('rest/services', 'services')
+            url += 'WFSServer?request=GetCapabilities&amp;service=WFS';
+
+        return { 'scheme': get_types(type.lower()), 'url': url}
+
+    def get_refs(service):
+        values = []
+        references = service.service_refs.split(',')
+        for reference in references:
+           values.append(build_service_url(service, reference.strip()))
+
+        return values
+
+    def get_types(server_type):
+
+        if 'REST' in server_type or 'mapserver' in server_type:
+            layer_type = 'ESRI:ArcGIS:MapServer'
+        elif 'kml' in server_type:
+            layer_type = 'OGC:KML'
+        elif 'wfs' in server_type:
+            layer_type = 'OGC:WFS'
+        else:
+            layer_type = 'OGC:WMS'
+
+        return layer_type
+
+    catalogue = get_catalogue()
+    service = Service.objects.get(pk=id)
+    if service.type in ["WMS", "OWS"]:
+        for record in service.servicelayer_set.all():
+            item = Record({
+                'uuid': record.uuid,
+                'title': record.title.encode('ascii', 'xmlcharrefreplace'),
+                'creator': service.owner.username,
+                'record_type': 'dataset',
+                'modified': datetime.datetime.now(),
+                'typename': record.typename,
+                'date': service.date,
+                'abstract': record.description.encode('ascii', 'xmlcharrefreplace') if record.description else '',
+                'format': get_types(service.type),
+                'base_url': service.base_url,
+                'references': [{ 'scheme': "OGC:WMS", 'url': service.base_url}],#.join(reference_element),
+                'category': escape(service.category.gn_description if service.category else ''),
+                'contact': 'registry',
+                'bbox_l': '{} {}'.format(record.bbox_y1, record.bbox_x1),
+                'bbox_u': '{} {}'.format(record.bbox_y0, record.bbox_x0),
+                'classification': service.classification,
+                'caveat': service.caveat,
+                'fees': service.fees,
+                'provenance': service.provenance,
+                'maintenance_frequency': service.maintenance_frequency,
+                'license': service.license,
+                'keywords': record.keywords,
+                'title_alternate': record.typename
+            })
+            resp = catalogue.create_record(item)
+            logger.debug(resp)
+    else:
+        item = Record({
+                'uuid': service.uuid,
+                'title': service.title.encode('ascii', 'xmlcharrefreplace'),
+                'creator': service.owner.username,
+                'record_type': 'dataset',
+                'modified': datetime.datetime.now(),
+                'typename': service.servicelayer_set.all()[0].typename,
+                'date': service.date,
+                'abstract': service.description.encode('ascii', 'xmlcharrefreplace') if service.description else '',
+                'format': get_types(service.type),
+                'base_url': service.base_url,
+                'references': get_refs(service) if service.service_refs else [],
+                'category': escape(service.category.gn_description if service.category else ''),
+                'contact': 'registry',
+                'bbox_l': '-85.0 -180',#.format(record.bbox_y1, record.bbox_x1),
+                'bbox_u': '85.0 180',#.format(record.bbox_y0, record.bbox_x0),
+                'classification': service.classification,
+                'caveat': service.caveat,
+                'fees': service.fees,
+                'provenance': service.provenance,
+                'maintenance_frequency': service.maintenance_frequency,
+                'license': service.license,
+                #'keywords': service.keywords,
+                'title_alternate': service.servicelayer_set.all()[0].typename
+            })
+        resp = catalogue.create_record(item)
+        logger.debug(resp)
+
+
+@task(
+    bind=True,
+    max_retries=1,
+)
+def delete_record(self, record_id):
     """
-    Attempt to create a new CSW record in Registry
+    Remove a CSW record from CSW then the database.
     """
-
-    csw_record_template = """
-        <csw:Transaction xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
-        xmlns:ows="http://www.opengis.net/ows"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2
-        http://schemas.opengis.net/csw/3.0.0/CSW-publication.xsd"
-        service="CSW" version="2.0.2"
-        xmlns:dc="http://purl.org/dc/elements/1.1/"
-        xmlns:dct="http://purl.org/dc/terms/"
-        xmlns:registry="http://gis.harvard.edu/HHypermap/registry/0.1" >
-        <csw:Insert>
-
-            <csw:Record xmlns:registry="http://gis.harvard.edu/HHypermap/registry/0.1">
-            <dc:identifier>{uuid}</dc:identifier>
-            <dc:title>{title}</dc:title>
-            <dc:creator>{creator}</dc:creator>
-            <dc:type>{record_type}</dc:type>
-            <dct:alternative>{alternative}</dct:alternative>
-            <dct:modified>{modified}</dct:modified>
-            <dct:abstract>{abstract}</dct:abstract>
-            <dc:format>{record_format}</dc:format>
-            <dc:source>{source}</dc:source>
-            <dc:relation>{relation}</dc:relation>
-            <dc:gold>{gold}</dc:gold>
-            <registry:property name="category" value="{category}"/>
-            <registry:property
-            name="ContactInformation/Primary/organization"
-            value="{contact}" />
-            <ows:BoundingBox
-            crs="http://www.opengis.net/def/crs/EPSG/0/4326"
-            dimensions="2">
-                <ows:LowerCorner>{bbox_l}</ows:LowerCorner>
-                <ows:UpperCorner>{bbox_u}</ows:UpperCorner>
-            </ows:BoundingBox>
-            </csw:Record>
-
-        </csw:Insert>
-        </csw:Transaction>"""
-
-    namespaces = {
-        "csw": "http://www.opengis.net/cat/csw/2.0.2",
-        "dc": "http://purl.org/dc/elements/1.1/",
-        "ows": "http://www.opengis.net/ows",
-    }
 
     record = CSWRecord.objects.get(id=record_id)
     record.status = "Pending"
     record.save()
 
-    def fail(message):
-        record.status = "Error"
-        record.save()
-        logger.error(message)
-        error = UpstreamServiceImpairment(message)
-        raise self.retry(exc=error)
+    # Why write XML when there are strings?
+    # This is a CSW delete request, it uses any filter
+    # but this one specifys using the identifier.
+    csw_delete = """
+        <csw:Transaction xmlns:ogc="http://www.opengis.net/ogc"
+                         xmlns:csw="http://www.opengis.net/cat/csw/2.0.2"
+                         xmlns:ows="http://www.opengis.net/ows"
+                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                         xsi:schemaLocation="http://www.opengis.net/cat/csw/2.0.2 http://schemas.opengis.net/csw/2.0.2/CSW-publication.xsd"
 
-    registry_url = settings.REGISTRY_LOCAL_URL
-    catalog = settings.REGISTRY_CAT
-    csw_url = urljoin(registry_url, "catalog/{}/csw".format(catalog))
-    post_data = csw_record_template.format(
-        uuid=record_id,
-        title=record.title,
-        creator=record.creator,
-        record_type=record.record_type,
-        alternative=record.alternative,
-        modified=record.modified,
-        abstract=record.abstract,
-        record_format=record.record_format,
-        source=record.source,
-        relation=record.relation,
-        gold=record.gold,
-        category=record.category,
-        contact=record.contact_information,
-        bbox_l=record.bbox_lower_corner,
-        bbox_u=record.bbox_upper_corner,
+                         xmlns:dc="http://purl.org/dc/elements/1.1/"
+                         xmlns:dct="http://purl.org/dc/terms/"
+                         service="CSW"
+                         version="2.0.2">
+          <csw:Delete>
+            <csw:Constraint version="1.1.0">
+              <ogc:Filter>
+                <ogc:PropertyIsEqualTo>
+                  <ogc:PropertyName>dc:identifier</ogc:PropertyName>
+                  <ogc:Literal>{record_id}</ogc:Literal>
+                </ogc:PropertyIsEqualTo>
+              </ogc:Filter>
+            </csw:Constraint>
+          </csw:Delete>
+        </csw:Transaction>
+    """
+
+
+    post_data = csw_delete.format(
+        record_id=record_id
     )
+    print post_data 
 
-    logger.info("Creating new CSW with: \n{}".format(post_data))
-    response = requests.post(csw_url, data=post_data)
+    #results = csw_post(self, record, post_data)
+    #results = { 'Deleted' : 0 }
 
-    if response.status_code != 200:
-        message = "{} during CSW record creation: {}".format(
-            response.status_code,
-            response.content,
-        )
-        return fail(message)
-
-    try:
-        parsed = etree.fromstring(response.content)
-    except (ValueError, etree.XMLSyntaxError):
-        return fail("Error while parsing response from registry")
-
-    exceptiontext = parsed.xpath("//ows:ExceptionText", namespaces=namespaces)
-    totalinserted = parsed.xpath("//csw:totalInserted", namespaces=namespaces)
-
-    if exceptiontext:
-        # we're going to consider this an "error" even if registry returns a
-        # positive TransactionSummary/totalInserted value along with the error
-        return fail("Error(s) during record creation" + ", ".join(
-            x.text for x in exceptiontext
-        ))
-
-    elif not totalinserted or len(totalinserted) != 1:
-        return fail("response XML did not contain one //csw:totalInserted")
-
-    elif int(totalinserted[0].text) > 0:
-        record.status = "Complete"
-        record.save()
-        logger.info("Record successfully created: {}".format(response.content))
-        return
-
-    # Fell through, no totalinserted or it was 0
-    fail("No record created but no error reported")
+    # ensure the record is removed from CSW,
+    #  if it is, then delete it.
+    #if(results['Deleted'] != 1):
+      #  csw_fail(self, record, "Failed to remove CSW record")
+    #else:
+        #record.delete()

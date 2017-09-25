@@ -24,9 +24,10 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from maploom.geonode.urls import urlpatterns as maploom_urls
 from fileservice.urls import urlpatterns as fileservice_urls
+from thumbnails.urls import urlpatterns as thumbnail_urls
 from geonode.urls import urlpatterns as geonode_urls
 from . import views
-from django.views.defaults import page_not_found
+from storyscapes.urls import urlpatterns as story_urls
 
 js_info_dict = {
     'packages': ('geonode.layers',),
@@ -37,6 +38,8 @@ urlpatterns = patterns(
     url(r'^/?$', views.home_screen, name='home'),
     url(r'^layers/(?P<layername>[^/]*)/metadata_detail$',
         views.layer_metadata_detail, name='layer_metadata_detail'),
+    url(r'^layers/(?P<layername>[^/]*)/publish$',
+        views.layer_publish, name='layer_publish'),
     url(r'^maps/(?P<mapid>[^/]*)/metadata_detail$', views.map_metadata_detail,
         name='map_metadata_detail'),
     url(r'^wfsproxy/', views.geoserver_reverse_proxy,
@@ -44,15 +47,11 @@ urlpatterns = patterns(
     # Redirect help and developer links to the documentation page
     url(r'^help/$', views.documentation_page, name='help'),
     url(r'^developer/$', views.documentation_page, name='developer'),
-    url(r'^csw/new/$', views.insert_csw, name='insert_csw'),
-    url(r'^csw/status/$', views.csw_status, name='csw_status'),
-    url(r'^csw/status_table/$', views.csw_status_table, name='csw_status_table'),
-)
 
-if settings.REGISTRY is False:
-    urlpatterns += [
-        url(r'^services(.*)$', page_not_found)
-    ]
+    url(r'^services/(?P<pk>\d+)/publish$', views.publish_service, name='publish_service'),
+
+    url(r'^about/', views.about_page, name='about')
+)
 
 if settings.ENABLE_SOCIAL_LOGIN is True:
     urlpatterns += [
@@ -74,6 +73,13 @@ if 'osgeo_importer' in settings.INSTALLED_APPS:
     from osgeo_importer.urls import urlpatterns as osgeo_importer_urls
     urlpatterns += osgeo_importer_urls
 
+if settings.STORYSCAPES_ENABLED:
+    urlpatterns += story_urls
+
+if 'nearsight' in settings.INSTALLED_APPS:
+    from nearsight.urls import urlpatterns as nearsight_urls
+    urlpatterns += nearsight_urls
+
 # use combined registry/geonode elastic search rather than geonode search
 if settings.ES_UNIFIED_SEARCH:
     urlpatterns += [url(r'^api/(?P<resourcetype>base)/search/$',
@@ -91,8 +97,12 @@ if settings.ES_UNIFIED_SEARCH:
     urlpatterns += [url(r'^api/(?P<resourcetype>registry)/search/$',
                         views.unified_elastic_search,
                         name='unified_elastic_search')]
+    urlpatterns += [url(r'^autocomplete', 
+                        views.empty_page, 
+                        name='autocomplete_override')]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += geonode_urls
 urlpatterns += maploom_urls
 urlpatterns += fileservice_urls
+urlpatterns += thumbnail_urls

@@ -30,6 +30,9 @@ services:
         # see docker/nginx/Dockerfile
         # The only change from upstream is to add a section to the nginx config
         build: ./docker/nginx
+        ports:
+          - "8084:80"
+          - "443:443"
         networks:
             internal:
             # users need nginx visible to host on a fixed IP for convenience;
@@ -41,6 +44,7 @@ services:
         links:
             - exchange
             - geoserver
+            - registry
 
     # Database for use by Django, Celery and GeoServer
     database:
@@ -51,7 +55,11 @@ services:
         # also bakes in the initialization to avoid doing it at boot time
         build: ./docker/postgres
         networks:
-            - internal
+            internal:
+            external:
+                ipv4_address: 172.16.238.7
+        ports:
+            - "54320:5432"
 
     # Message queue receives tasks from django to be consumed by celery worker
     queue:
@@ -83,7 +91,7 @@ services:
         build: ./docker/geoserver
         ports:
             # 8080 is the traditional HTTP port baked into server.xml
-            - "8080"
+            - "8080:8080"
         links:
             - database
         volumes:
@@ -139,6 +147,33 @@ services:
             - "80"
             # export ssl version as well.
             - "443"
+
+    # Container running registry        
+    registry:
+        env_file: .env
+        container_name: registry
+        image: registry
+        build: ./docker/registry
+        links:
+            - search
+        ports:
+            - "8001"
+        volumes:
+            - scratch:/scratch
+
+            # For local dev'ing, uncomment the below
+            #  If using the line below verbatim, 
+            #  registry must be cloned to ~/boundless/registry
+            # - ~/boundless/registry:/opt/registry:ro
+
+        networks:
+            internal:
+            # Expose on a fixed host IP for diagnostic purposes.
+            external:
+                ipv4_address: 172.16.238.6
+        environment:
+            # Setup registry to use included search
+            - REGISTRY_SEARCH_URL=http://search:9200
 
     # worker process which does "background" work for the django app
     worker:
