@@ -1,11 +1,11 @@
 --index-url https://pypi.python.org/simple/
 
-git+https://github.com/MapStory/composer.git@master#composer
-git+https://github.com/boundlessgeo/django-exchange-maploom.git@master#django-exchange-maploom
-git+https://github.com/boundlessgeo/geonode@exchange/1.3.0#egg=geonode
-git+https://github.com/GeoNode/django-osgeo-importer@angular-1.6#egg=django-osgeo-importer
-git+https://github.com/boundlessgeo/exchange-documentation@master#egg=django-exchange-docs
-git+https://github.com/venicegeo/nearsight@master#egg=nearsight
+git+https://github.com/MapStory/composer@93300659c4f1a02c4eb2f17713d38779c47cc4e1#composer
+git+https://github.com/boundlessgeo/django-exchange-maploom.git@v1.5.72#django-exchange-maploom
+git+https://github.com/boundlessgeo/geonode@d48a09a82d74e3b10074c9889046ec7f733eebbf#egg=geonode
+git+https://github.com/GeoNode/django-osgeo-importer@354385386307dda1573e568dfefc91457e25c5bf#egg=django-osgeo-importer
+git+https://github.com/boundlessgeo/exchange-documentation@8bff66456353e969ca3b121017db551c379f3ec8#egg=django-exchange-docs
+git+https://github.com/venicegeo/nearsight@30d0f2f426234b2131a1c738a407130bb3376ffb#egg=nearsight
 django-jsonfield==1.0.1
 django-jsonfield-compat==0.4.4
 numpy==1.11.3
