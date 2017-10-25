@@ -123,6 +123,9 @@ services:
             # Add a MapLoom home
             - $MAPLOOM_HOME:/mnt/maploom:ro
 
+            # Add castling to the docker environment
+            - $CASTLING_HOME:/mnt/castling:ro
+
             # Ideally, all volumes shared with host are mounted read-only.
             # But we have to pip install -e /mnt/geonode to ensure GeoNode's
             # dependencies are all installed per its setup.py.
