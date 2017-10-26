@@ -49,6 +49,7 @@ Installation
        git clone https://github.com/boundlessgeo/geonode.git
        git clone https://github.com/boundlessgeo/exchange.git
        git clone https://github.com/boundlessgeo/MapLoom.git
+       git clone https://github.com/boundlessgeo/castling.git
 
 4. Build local MapLoom
 
@@ -77,8 +78,20 @@ Installation
 
        ./clean-build
 
+5. Install castling
 
-5. Checkout the right geonode branch
+    Castling is the new SDK/React-based user interface for Exchange.
+
+    Building castling ::
+
+        mkdir ~/boundless/castling
+        npm install
+        npm install -g yarn
+        yarn build-css
+        yarn build
+
+
+6. Checkout the right geonode branch
 
   ::
 
@@ -96,10 +109,11 @@ Installation
        GEONODE_HOME=/wherever/you/keep/geonode
        EXCHANGE_HOME=/wherever/you/keep/exchange
        MAPLOOM_HOME=/wherever/you/keep/MapLoom
+       CASTLING_HOME=/wherever/you/keep/castling
 
    Why is this necessary? `.env` is read by `docker-compose` so that it knows
    where on your computer to find the directories which will be mounted inside
-   the containers as `/mnt/exchange`, `/mnt/geonode` and `/mnt/maploom`. If
+   the containers as `/mnt/exchange`, `/mnt/geonode`, `/mnt/castling` and `/mnt/maploom`. If
    these are not set accurately, then the exchange container and the Celery
    worker container will not be able to start properly because they won't have
    code to start with.
