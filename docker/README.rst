@@ -22,8 +22,27 @@ Docker
     e.g. by putting your user in the docker group. Other times, you will have to perform such steps yourself, according to the instructions,
     then log out and back in. In some environments, such as Arch Linux, you may need to manually start the docker service after installing Docker.
 
+Cloning repositories
+~~~~~~~~~~~~~~~~~~~~
+
+The following is a sample installation set got getting the code needed
+for Exchange and Castling::
+
+       cd ~/boundless
+       git clone https://github.com/boundlessgeo/geonode.git
+       git clone https://github.com/boundlessgeo/exchange.git
+       git clone https://github.com/boundlessgeo/MapLoom.git
+       git clone https://github.com/boundlessgeo/castling.git
+
 Installation
 -------------
+
+MapLoom and Castling
+~~~~~~~~~~~~~~~~~~~~
+
+Before running these steps, you'll need npm (the Node Package Manager)
+installed on your dev machine. Follow the installation instructions for your
+platform at https://nodejs.org/en/download/.
 
 Build MapLoom
 ~~~~~~
@@ -32,14 +51,24 @@ MapLoom is a JavaScript application that needs to be built locally at least
 once before it can be used in Exchange development. As before, if you've
 already done this just go on to the next step.
 
-Before running this step, you'll need npm (the Node Package Manager)
-installed on your dev machine. Follow the installation instructions for your
-platform at https://nodejs.org/en/download/.
-
 Next, do the following locally ::
 
   cd /path/to/MapLoom
   ./quicksetup.sh
+
+
+Installing Castling
+~~~~~~~~~~~~~~~~~~~
+
+    Castling is the new SDK/React-based user interface for Exchange.
+
+    Building castling ::
+
+        cd ~/boundless/castling
+        npm install
+        npm install -g yarn
+        yarn build-css
+        yarn build
 
 
 Update `.env` file
