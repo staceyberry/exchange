@@ -27,7 +27,9 @@ from fileservice.urls import urlpatterns as fileservice_urls
 from thumbnails.urls import urlpatterns as thumbnail_urls
 from geonode.urls import urlpatterns as geonode_urls
 from . import views
-from storyscapes.urls import urlpatterns as story_urls
+
+from .api.base.router import api_urlpatterns as api_v1
+from .api.versioned.v2.router import api_urlpatterns as api_v2
 
 js_info_dict = {
     'packages': ('geonode.layers',),
@@ -50,7 +52,9 @@ urlpatterns = patterns(
 
     url(r'^services/(?P<pk>\d+)/publish$', views.publish_service, name='publish_service'),
 
-    url(r'^about/', views.about_page, name='about')
+    url(r'^about/', views.about_page, name='about'),
+    url(r'^api/v1/', include(api_v1, namespace='api-v1')),
+    url(r'^api/v2/', include(api_v2, namespace='api-v2')),
 )
 
 if settings.ENABLE_SOCIAL_LOGIN is True:
@@ -72,9 +76,6 @@ if 'osgeo_importer' in settings.INSTALLED_APPS:
     # Add django-osgeo-importer URLs
     from osgeo_importer.urls import urlpatterns as osgeo_importer_urls
     urlpatterns += osgeo_importer_urls
-
-if settings.STORYSCAPES_ENABLED:
-    urlpatterns += story_urls
 
 if 'nearsight' in settings.INSTALLED_APPS:
     from nearsight.urls import urlpatterns as nearsight_urls
