@@ -189,6 +189,7 @@ INSTALLED_APPS = (
     'exchange.storyscapes',
     'composer',
     'social_django',
+    'rest_framework',
 ) + ADDITIONAL_APPS + INSTALLED_APPS
 
 if OSGEO_IMPORTER_ENABLED:
