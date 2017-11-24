@@ -9,162 +9,45 @@
     <link rel="stylesheet" href="{{ STATIC_URL }}css/era/map_style.css?v={{ VERSION }}" type="text/css">
     <link href="//fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
+    {# SDK Specific Things #}
+    <script>
+        if (!Date.now) {
+            Date.now = function now() {
+                return new Date().getTime();
+            };
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/window.requestanimationframe@1.0.1/requestanimationframe.js"></script>
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+    {# End SDK Specific Things#}
 
-    <script src="{{ STATIC_URL }}js/era/angular.min.js"></script>
-    <script src="{{ STATIC_URL }}js/era/jquery.min.js"></script>
 
-    <script src="{{ STATIC_URL }}js/era/collapse.js"></script>
-
-    <!-- FINAL SCRIPTS -->
-    <script src="{{ STATIC_URL }}js/era/story-tools-vendor-all.js?v={{ VERSION }}"></script>
-    <script src="{{ STATIC_URL }}js/era/story-tools-core-all.js?v={{ VERSION }}"></script>
-    <!-- END FINAL SCRIPTS -->
-
-    <script src="{{ STATIC_URL }}js/era/sprite.js?v={{ VERSION }}"></script>
-
-    <script type="text/javascript" src="{{ STATIC_URL }}js/era/materialize.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/era/animate.js?v={{ VERSION }}"></script>
     <script type="text/javascript">
         'use strict';
 
-        (function() {
-            $('ul.tabs').tabs();
-
-        })();
-
-        var BASEMAP_CONFIG =  {{ MAP_BASELAYERS|safe }};
-        var ORG = {% if user.is_authenticated %} "{{ user.organization }}" {% else %} undefined {% endif %};
-        var SITE_URL = "{{ SITE_URL}}";
-        var ACCESS_TOKEN = "{{ ACCESS_TOKEN }}";
+        window.BASEMAP_CONFIG = {{ MAP_BASELAYERS|safe }};
+        window.ORG = {% if user.is_authenticated %} "{{ user.organization }}" {% else %} undefined {% endif %};
+        window.SITE_URL = "{{ SITE_URL}}";
+        window.ACCESS_TOKEN = "{{ ACCESS_TOKEN }}";
     </script>
-    <script src="{{ STATIC_URL }}js/era/helpers.js?v={{ VERSION }}"></script>
-    <script src="{{ STATIC_URL }}js/era/viewer.js?v={{ VERSION }}"></script>
 </head>
-<body ng-controller="viewerController as viewer">
-{% verbatim %}
-<div id="story-viewer">
-    <div id="main">
-        <div id="content">
-            <div id="middle">
-                <div ng-show="selected.layers" class="floating col-lg-4 ng-hide" style="z-index: 999;position: absolute;">
-                    <ul class="collapsible" data-collapsible="accordion">
-                        {% endverbatim %}
-                        {% if request.user|has_group:"operations" %}
-                        <li>
-                            <div class="collapsible-header">Flight History</div>
-                            <div class="collapsible-body" style="background: rgba(255,255,255, 0.9); padding:1rem;">
-                                <div st-breadcrumbs></div>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="collapsible-header">Distance and Bearing Calcuator</div>
-                            <div class="collapsible-body" style="background: rgba(255,255,255, 0.9); padding:1rem;">
-                                <div st-distance-bearing></div>
-                            </div>
-                        </li>
-                        {% endif %}
-                        {% verbatim %}
-                        <li>
-                            <div class="collapsible-header">Layer List</div>
-                            <div class="collapsible-body" style="background: rgba(255,255,255, 0.9); padding:1rem;">
-                                <ul class="collapsible" data-collapsible="accordion" style="border-color:white; margin:0px; box-shadow: none;">
-                                    <li ng-repeat="layer in mapManager.storyMap.getStoryLayers().getArray()">
-                                        <div class="collapsible-header">
-                                            <a ng-click="toggleVisibleLayer(layer); $event.stopPropagation();">
-                                                <i class="material-icons " ng-class="{'visible': layer.get('visibility'), 'hidden': !layer.get('visibility')}">place</i>
-                                                <i class="material-icons " ng-class="{'visible': !layer.get('visibility'), 'hidden': layer.get('visibility')}">location_off</i>
-                                            </a>
-                                            <span class="new badge" data-badge-caption="">{{ layer.get('features').length }}</span>
-                                            <span ng-hide="!errors[layer.get('name')]" class="new badge red" data-badge-caption="">Unavailable</span>
-                                            <span ng-hide="!loading[layer.get('name')]" class="new badge" data-badge-caption="...">Loading</span>
-                                            {{layer.get('title')}}
-                                        </div>
-                                        <div class="collapsible-body" style="background: rgba(255,255,255, 0.9); padding:1rem; max-height: 350px; overflow: scroll">
-                                            <table class="striped">
-                                                <tbody>
-                                                <tr ng-if="layer.get('features').length == 0"><td style="text-align:center;">No Data</td></tr>
-                                                <tr class="row" ng-repeat="attr in layer.get('features') | sortByAttribute:'TITLE'">
-                                                    <td>
-                                                        <a ng-click="zoomToExtent(attr); $event.stopPropagation();"><i class="material-icons" style="cursor:pointer;vertical-align: middle;">zoom_in</i></a> {{attr.get('TITLE') || attr.get('LOCATION_NAME')}}
+  <body style="overflow-y: visible">
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
 
-                                                    </td>
-                                                    <td>
-                                                        {{attr.get('COMPANY') || attr.get('CUSTOMER')}}
-                                                    </td>
-                                                </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="collapsible-header">Basemaps</div>
-                            <div class="collapsible-body" style="background: rgba(255,255,255, 0.9); padding:1rem;">
-                                <div class="row">
-                                    <label>Lat/Lon Graticule</label>
-                                    <div class="switch">
-                                        <label>
-                                            Off
-                                            <input type="checkbox" ng-model="model.graticule">
-                                            <span class="lever"></span>
-                                            On
-                                        </label>
-                                    </div>
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
 
-                                </div>
-                                <div>
-                                    <table class="striped">
-                                        <tbody>
-                                        <tr class="row" ng-repeat="baseLayer in baseLayers" ng-click="onChange(baseLayer)"><td>{{baseLayer.title}}</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div></div>
-                        </li>
-                    </ul>
-                </div>
-                <div class="stLegend"></div>
-                <canvas id="canvas" width="32" height="32" style="display: block; margin: 0 auto; display: none; border: 1px solid black;">
-                    Your browser does not support the &lt;canvas&gt; element!
-                </canvas>
-                <canvas id="canvasGreen" width="32" height="32" style="display: block; margin: 0 auto; display: none; border: 1px solid black;">
-                    Your browser does not support the &lt;canvas&gt; element!
-                </canvas>
-                <canvas id="canvasRed" width="32" height="32" style="display: block; margin: 0 auto; display: none; border: 1px solid black;">
-                    Your browser does not support the &lt;canvas&gt; element!
-                </canvas>
-                <div id="map"></div>
-
-                  <a style="position:fixed;right:23px;bottom:23px;" class="btn-floating btn-large waves-effect waves-light red" ng-click="selected = {layers:!selected.layers}">
-                        <i class="large material-icons">view_module</i>
-                    </a>
-            </div>
-        </div>
-    </div>
-    <div id="footer" class='floating-below' ng-show="timeControlsManager.timeControls  && timeControlsManager.timeControls.isReady()">
-
-        <div id="time-controls-panel2">
-            <div class="navbar" ng-controller="tileProgressController">
-                <st-playback-controls class="pull-left"
-                                      time-controls="timeControlsManager.timeControls"></st-playback-controls>
-                <progressbar animate="false"
-                             class="navbar-nav navbar-right" value="tilesLoadedProgress">
-                    <b ng-if="tilesLoaded" ng-bind="tilesLoaded + '/' + tilesToLoad"></b>
-                </progressbar>
-            </div>
-            <div id="playback-settings" class="panel-collapse collapse" style="height: 0px; color:black; opacity: 0.58; background-color: white;">
-                <div class="panel-heading">Playback Options</div>
-                <st-playback-settings playback-options="playbackOptions" time-controls="timeControlsManager.timeControls"></st-playback-settings>
-            </div>
-            <!-- Need to make this display init configureable-->
-            <div style="display: none;" id="timeline"></div>
-        </div>
-    </div>
-</div>
-<div style="display: none;">
-    <div id="story-pin-popup"></div>
-</div>
-{% endverbatim %}
-</body>
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+  <script src="{{ STATIC_URL }}js/era/bundle.js"></script>
 </html>
