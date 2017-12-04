@@ -623,3 +623,24 @@ MAP_CLIENT_USE_CROSS_ORIGIN_CREDENTIALS = str2bool(os.getenv(
 ))
 
 PROXY_URL = ''
+
+# AWS S3 Settings
+#
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID','')
+AWS_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME' ,'')
+AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME','')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY','')
+AWS_S3_BUCKET_DOMAIN = '%s.s3.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,)
+USE_AWS_S3_STATIC = str2bool(os.environ.get('USE_AWS_S3_STATIC', 'False'))
+USE_AWS_S3_MEDIA = str2bool(os.environ.get('USE_AWS_S3_MEDIA', 'False'))
+
+if USE_AWS_S3_STATIC:
+    STATICFILES_LOCATION = 'static'
+    STATICFILES_STORAGE = 'exchange.core.s3_storages.StaticStorage'
+    STATIC_URL = "https://%s/%s/" % (AWS_S3_BUCKET_DOMAIN, STATICFILES_LOCATION)
+    REMOTE_CONTENT_URL = STATIC_URL + 'assets'
+
+if USE_AWS_S3_MEDIA:
+    MEDIAFILES_LOCATION = 'media'
+    MEDIA_URL = "https://%s/%s/" % (AWS_S3_BUCKET_DOMAIN, MEDIAFILES_LOCATION)
+    DEFAULT_FILE_STORAGE = 'exchange.core.s3_storages.MediaStorage'
