@@ -2,7 +2,7 @@
 
 git+https://github.com/MapStory/composer.git@93300659c4f1a02c4eb2f17713d38779c47cc4e1#composer
 git+https://github.com/boundlessgeo/django-exchange-maploom.git@v1.5.87#django-exchange-maploom
-git+https://github.com/boundlessgeo/geonode@exchange/a4a6fc931433705e29d1ac1981c2365ecfa66bd7#egg=geonode
+git+https://github.com/boundlessgeo/geonode@a4a6fc931433705e29d1ac1981c2365ecfa66bd7#egg=geonode
 git+https://github.com/GeoNode/django-osgeo-importer@e4e906b2db20ffac35560e2951a45629c3487161#egg=django-osgeo-importer
 git+https://github.com/boundlessgeo/exchange-documentation@aa29e7ac2d58a06a8ec9db46c16f57bb3d8ed160#egg=django-exchange-docs
 git+https://github.com/venicegeo/nearsight@a4569ea7188497b0915f6d6fce9eaf8b1f976e05#egg=nearsight
