@@ -217,7 +217,7 @@ ADDITIONAL_AUTH_EXEMPT_URLS = os.getenv(
 if isinstance(ADDITIONAL_AUTH_EXEMPT_URLS, str):
     ADDITIONAL_AUTH_EXEMPT_URLS = tuple(map(str.strip, ADDITIONAL_AUTH_EXEMPT_URLS.split(',')))
 
-AUTH_EXEMPT_URLS = ('/complete/*', '/login/*', '/api/o/*', '/api/roles', '/api/adminRole', '/api/users', '/o/token/*', '/o/authorize/*',) + ADDITIONAL_AUTH_EXEMPT_URLS
+AUTH_EXEMPT_URLS = ('/capabilities', '/complete/*', '/login/*', '/api/o/*', '/api/roles', '/api/adminRole', '/api/users', '/o/token/*', '/o/authorize/*',) + ADDITIONAL_AUTH_EXEMPT_URLS
 
 # geoserver settings
 GEOSERVER_URL = os.getenv(
@@ -320,35 +320,14 @@ CATALOGUE = {
 
 '''
 unified search settings
-ES_UNIFIED_SEARCH must be set to True
+ES_SEARCH must be set to True
 Elastic Search for both Registry and GeoNode must running
 on same elasticsearch instance at ES_URL
 REGISTRY_URL must be set in order to provide links to Registry
 '''
-ES_UNIFIED_SEARCH = str2bool(os.getenv('ES_UNIFIED_SEARCH', 'False'))
 
-# haystack settings
+# elasticsearch-dsl settings
 ES_URL = os.getenv('ES_URL', 'http://127.0.0.1:9200/')
-ES_ENGINE = os.getenv(
-    'ES_ENGINE',
-    'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine'
-)
-HAYSTACK_SEARCH = str2bool(os.getenv('HAYSTACK_SEARCH', 'False'))
-if ES_UNIFIED_SEARCH:
-    HAYSTACK_SEARCH = True
-    HAYSTACK_FACET_COUNTS = True
-if HAYSTACK_SEARCH:
-    HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
-    HAYSTACK_CONNECTIONS = {
-        'default': {
-            'ENGINE': ES_ENGINE,
-            'URL': ES_URL,
-            'INDEX_NAME': 'exchange',
-        },
-    }
-    INSTALLED_APPS = (
-        'haystack',
-    ) + INSTALLED_APPS
 
 
 # amqp settings

@@ -314,11 +314,45 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .cartItem {
-  text-overflow: ellipsis; 
-  overflow: hidden; 
-  display: block; 
-  margin-right: 25px;
+    text-overflow: ellipsis; 
+    overflow: hidden; 
+    display: block; 
+    margin-right: 25px;
 }
-.cartButton{
-  margin-top: -25px;
+.cartButton {
+    margin-top: -25px;
+}
+
+#bulk_perms_button, #open_in_map_button {
+    white-space: pre-line;
+    width: 100%;
+}
+
+#bulk_perms_button_container, #open_in_map_button_container {
+    width: 100%;
+}
+
+/* GeoNode Viewer Feature Removal */
+.sdk-component .ms.ms-style {
+    display: none;
+}
+
+#globe-button {
+    display: none;
+}
+
+#print-button {
+    top: 189px;
+}
+
+/* Fix Homepage Categories */
+.home #datasets a .category {
+    margin: 0 auto;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    -ms-word-break: break-all;
+    word-break: break-word;
+    -ms-hyphens: auto;
+    -moz-hyphens: auto;
+    hyphens: auto;
 }

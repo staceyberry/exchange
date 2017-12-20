@@ -6,7 +6,6 @@ from django.conf import settings
 from django.shortcuts import render, render_to_response, redirect
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
-from exchange.core.models import ThumbnailImage, ThumbnailImageForm
 from exchange.version import get_version
 from geonode.maps.views import _resolve_map
 from geonode.layers.views import _resolve_layer, _PERMISSION_MSG_METADATA
@@ -15,7 +14,8 @@ from pip._vendor import pkg_resources
 from exchange.tasks import create_record, delete_record
 from django.core.urlresolvers import reverse
 from geonode.services.models import Service
-
+from oauth2_provider.models import Application
+from django.contrib.sites.shortcuts import get_current_site
 
 
 logger = logging.getLogger(__name__)
@@ -43,13 +43,30 @@ def get_pip_version(project):
         return {'version': '', 'commit': ''}
 
 
-def about_page(request, template='about.html'):
+def get_geoserver_version():
+    try:
+        ogc_server = settings.OGC_SERVER['default']
+        geoserver_url = '{}/rest/about/version.json'.format(ogc_server['LOCATION'].strip('/'))
+        resp = requests.get(geoserver_url, auth=(ogc_server['USER'], ogc_server['PASSWORD']))
+        version = resp.json()['about']['resource'][0]
+        return {'version': version['Version'], 'commit': version['Git-Revision'][:7]}
+    except:
+        return {'version': '', 'commit': ''}
+
+
+def get_exchange_version():
     exchange_version = get_pip_version('geonode-exchange')
     if not exchange_version['version'].strip():
         version = get_version()
         pkg_version = version[:-8] if version[:-8] else version[-7:]
         commit_hash = version[-7:] if version[:-8] else version[:-8]
-        exchange_version = {'version': pkg_version, 'commit': commit_hash}
+        return {'version': pkg_version, 'commit': commit_hash}
+    else:
+        return exchange_version
+
+
+def about_page(request, template='about.html'):
+    exchange_version = get_exchange_version()
     try:
         exchange_releases = requests.get(
             'https://api.github.com/repos/boundlessgeo/exchange/releases'
@@ -61,15 +78,7 @@ def about_page(request, template='about.html'):
         if release['tag_name'] == 'v{}'.format(exchange_version['version']):
             release_notes = release['body'].replace(' - ', '\n-')
 
-    try:
-        ogc_server = settings.OGC_SERVER['default']
-        geoserver_url = '{}/rest/about/version.json'.format(ogc_server['LOCATION'].strip('/'))
-        resp = requests.get(geoserver_url, auth=(ogc_server['USER'], ogc_server['PASSWORD']))
-        version = resp.json()['about']['resource'][0]
-        geoserver_version = {'version': version['Version'], 'commit': version['Git-Revision'][:7]}
-    except:
-        geoserver_version = {'version': '', 'commit': ''}
-
+    geoserver_version = get_geoserver_version()
     geonode_version = get_pip_version('GeoNode')
     maploom_version = get_pip_version('django-exchange-maploom')
     importer_version = get_pip_version('django-osgeo-importer')
@@ -121,6 +130,32 @@ def about_page(request, template='about.html'):
         'exchange_version': exchange_version['version'],
         'exchange_release': release_notes
     }))
+
+
+def capabilities(request):
+    """
+    The capabilities view is like the about page, but for consumption by code instead of humans.
+    It serves to provide information about the Exchange instance.
+    """
+    capabilities = {}
+
+    capabilities["versions"] = {
+        'exchange': get_exchange_version(),
+        'geonode': get_pip_version('GeoNode'),
+        'geoserver': get_geoserver_version(),
+    }
+
+    mobile_extension_installed = "geonode_anywhere" in settings.INSTALLED_APPS
+    capabilities["mobile"] = (
+        mobile_extension_installed and
+        # check that the OAuth application has been created
+        len(Application.objects.filter(name='Anywhere')) > 0
+    )
+
+    current_site = get_current_site(request)
+    capabilities["site_name"] = current_site.name
+
+    return JsonResponse({'capabilities':  capabilities})
 
 
 def layer_metadata_detail(request, layername,
@@ -225,7 +260,7 @@ def gen_dict_extract(key, var):
 def key_exists(key, var):
     return any(True for _ in gen_dict_extract(key, var))
 
-def unified_elastic_search(request, resourcetype='base'):
+def elastic_search(request, resourcetype='base'):
     import requests
     import collections
     from elasticsearch import Elasticsearch
@@ -252,9 +287,7 @@ def unified_elastic_search(request, resourcetype='base'):
     mappings = es.indices.get_mapping()
 
     # Set base fields to search
-    fields = ['title', 'text', 'abstract', 'title_alternate']
-
-
+    fields = ['title', 'abstract', 'title_alternate']
 
     # This configuration controls what fields will be added to faceted search
     # there is some special exception code later that combines the subtype search
@@ -315,9 +348,6 @@ def unified_elastic_search(request, resourcetype='base'):
     # Text search
     query = parameters.get('q', None)
 
-    offset = int(parameters.get('offset', '0'))
-    limit = int(parameters.get('limit', settings.API_LIMIT_PER_PAGE))
-
     # Sort order
     sort = parameters.get("order_by", "relevance")
 
@@ -337,10 +367,10 @@ def unified_elastic_search(request, resourcetype='base'):
 
     # only show registry, documents, layers, stories, and maps
     q = Q({"match": {"_type": "layer"}}) | Q(
-          {"match": {"type_exact": "layer"}}) | Q(
-          {"match": {"type_exact": "story"}}) | Q(
-          {"match": {"type_exact": "document"}}) | Q(
-          {"match": {"type_exact": "map"}})
+          {"match": {"type": "layer"}}) | Q(
+          {"match": {"type": "story"}}) | Q(
+          {"match": {"type": "document"}}) | Q(
+          {"match": {"type": "map"}})
     search = search.query(q)
 
     # Filter geonode layers by permissions
@@ -354,42 +384,30 @@ def unified_elastic_search(request, resourcetype='base'):
         filter_set_ids = map(str, filter_set.values_list('id', flat=True))
         # Do the query using the filterset and the query term. Facet the
         # results
+        # Always show registry layers since they lack permissions
         q = Q({"match": {"_type": "layer"}})
         if len(filter_set_ids) > 0:
-            q = Q({"terms": {"django_id": filter_set_ids}}) | q
+            q = Q({"terms": {"id": filter_set_ids}}) | q
 
         search = search.query(q)
 
-    # Checks first if there is an [fieldname]_exact field and returns that
-    # otherwise checks if [fieldname] is present
-    # if neither returns None
-    def field_name(field, mappings):
-        field_exact = '%s_exact' % field
-        if key_exists(field_exact, mappings):
-            return field_exact
-        elif key_exists(field, mappings):
-            return field
-        else:
-            return None
-
     # Add facets to search
     # add filters to facet_filters to be used *after* initial overall search
-    valid_facet_fields = [];
+    valid_facet_fields = []
     facet_filters = []
-    for f in facet_fields:
-        fn = field_name(f, mappings)
+    for fn in facet_fields:
         if fn:
-            valid_facet_fields.append(f)
-            search.aggs.bucket(f, 'terms', field=fn, order={"_count": "desc"}, size=nfacets)
+            valid_facet_fields.append(fn)
+            search.aggs.bucket(fn, 'terms', field=fn, order={"_count": "desc"}, size=nfacets)
             # if there is a filter set in the parameters for this facet
             # add to the filters
-            fp = parameters.getlist(f)
+            fp = parameters.getlist(fn)
             if not fp:
-                fp = parameters.getlist("%s__in"%(f))
+                fp = parameters.getlist("%s__in"%(fn))
             if fp:
                 fq = Q({'terms': {fn: fp}})
-                if fn == 'type_exact': # search across both type_exact and subtype
-                    fq = fq | Q({'terms': {'subtype_exact': fp}})
+                if fn == 'type': # search across both type_exact and subtype
+                    fq = fq | Q({'terms': {'subtype': fp}})
                 facet_filters.append(fq)
 
     # run search only filtered by what a particular user is able to see
@@ -427,11 +445,11 @@ def unified_elastic_search(request, resourcetype='base'):
 
     # filter by resourcetype
     if resourcetype == 'documents':
-        search = search.query("match", type_exact="document")
+        search = search.query("match", type="document")
     elif resourcetype == 'layers':
-        search = search.query("match", type_exact="layer")
+        search = search.query("match", type="layer")
     elif resourcetype == 'maps':
-        search = search.query("match", type_exact="map")
+        search = search.query("match", type="map")
 
     # Build main query to search in fields[]
     # Filter by Query Params

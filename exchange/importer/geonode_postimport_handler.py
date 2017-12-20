@@ -9,8 +9,14 @@ class GeoNodePostImportHandler(ImportHandlerMixin):
     """
 
     def can_run(self, layer, layer_config, *args, **kwargs):
-        self.geonode_layer = Layer.objects.get(name=layer)
-        return True
+        for name in [layer, layer_config.get('name', None), layer_config.get('layer_name', None)]:
+            try:
+                self.geonode_layer = Layer.objects.get(name=name)
+                return True
+            except:
+                pass
+
+        return False
 
     @ensure_can_run
     def handle(self, layer, layer_config, *args, **kwargs):
