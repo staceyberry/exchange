@@ -14,8 +14,6 @@ from pip._vendor import pkg_resources
 from exchange.tasks import create_record, delete_record
 from django.core.urlresolvers import reverse
 from geonode.services.models import Service
-from oauth2_provider.models import Application
-from django.contrib.sites.shortcuts import get_current_site
 
 
 logger = logging.getLogger(__name__)
@@ -130,32 +128,6 @@ def about_page(request, template='about.html'):
         'exchange_version': exchange_version['version'],
         'exchange_release': release_notes
     }))
-
-
-def capabilities(request):
-    """
-    The capabilities view is like the about page, but for consumption by code instead of humans.
-    It serves to provide information about the Exchange instance.
-    """
-    capabilities = {}
-
-    capabilities["versions"] = {
-        'exchange': get_exchange_version(),
-        'geonode': get_pip_version('GeoNode'),
-        'geoserver': get_geoserver_version(),
-    }
-
-    mobile_extension_installed = "geonode_anywhere" in settings.INSTALLED_APPS
-    capabilities["mobile"] = (
-        mobile_extension_installed and
-        # check that the OAuth application has been created
-        len(Application.objects.filter(name='Anywhere')) > 0
-    )
-
-    current_site = get_current_site(request)
-    capabilities["site_name"] = current_site.name
-
-    return JsonResponse({'capabilities':  capabilities})
 
 
 def layer_metadata_detail(request, layername,

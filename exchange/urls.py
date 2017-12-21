@@ -55,7 +55,6 @@ urlpatterns = patterns(
     url(r'^about/', views.about_page, name='about'),
     url(r'^api/v1/', include(api_v1, namespace='api-v1')),
     url(r'^api/v2/', include(api_v2, namespace='api-v2')),
-    url(r'^capabilities/', views.capabilities, name='capabilities'),
 )
 
 if settings.ENABLE_SOCIAL_LOGIN is True:

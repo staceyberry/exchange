@@ -25,5 +25,6 @@ router = routers.DefaultRouter()
 
 router.register(r'categories', views.CategoryViewSet, base_name="categories")
 router.register(r'layers', views.LayerViewSet, base_name="layers")
+router.register(r'capabilities', views.CapabilitiesViewSet, base_name="capabilities")
 
 api_urlpatterns = router.urls
