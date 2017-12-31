@@ -23,12 +23,15 @@ def edsl_base_init(self, _expand__to_dot=False, **params):
             pname = pname.replace('__', '.')
         self._setattr(pname, pvalue)
 
+
 elasticsearch_dsl.utils.DslBase.__init__ = edsl_base_init
 Q = elasticsearch_dsl.query.Q
 
+
 def get_unified_search_result_objects(hits):
     # Reformat objects for use in the results.
-    # The ES objects need some reformatting in order to be useful for output to the client.
+    # The ES objects need some reformatting
+    # in order to be useful for output to the client.
 
     objects = []
     for hit in hits:
@@ -140,6 +143,7 @@ def get_base_query(request):
 
         return q
 
+
 def get_facet_fields():
     # This configuration controls what fields will be added to faceted search
     # there is some special exception code later that combines the subtype
@@ -208,7 +212,8 @@ def get_facet_results(aggregations, parameters):
 
 
 def get_main_query(search, query):
-    fields = ['title', 'abstract', 'title_alternate']  # Set base fields to search
+    # Set base fields to search
+    fields = ['title', 'abstract', 'title_alternate']
 
     # Build main query to search in fields[]
     # Filter by Query Params
@@ -351,13 +356,14 @@ def filter_results_by_facets(aggregations, facet_results):
         buckets = aggregations[k]['buckets']
         if len(buckets) > 0:
             for bucket in buckets:
-                bucket_key = bucket.key
-                bucket_count = bucket.doc_count
+                bkey = bucket.key
+                count = bucket.doc_count
                 try:
-                    if bucket_count > 0:
-                        facet_results[k]['facets'][bucket_key]['count'] = bucket_count
+                    if count > 0:
+                        facet_results[k]['facets'][bkey]['count'] = count
                 except Exception as e:
-                    facet_results['errors'] = "key: %s, bucket_key: %s, error: %s" % (k, bucket_key, e)
+                    facet_results['errors'] = "key: {}, bucket_key: {} \
+                        , error: {}".format(k, bkey, e)
 
     # combine buckets for type and subtype and get rid of subtype bucket
     if 'subtype' in facet_results:
@@ -424,7 +430,10 @@ def elastic_search(request, resourcetype='base'):
 
     logger.debug('search: {}, results: {}'.format(search, results))
 
-    filtered_facet_results = filter_results_by_facets(results.aggregations, facet_results)
+    filtered_facet_results = filter_results_by_facets(
+        results.aggregations,
+        facet_results
+    )
     # Get results
     objects = get_unified_search_result_objects(results.hits.hits)
 

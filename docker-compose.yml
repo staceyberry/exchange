@@ -116,7 +116,7 @@ services:
       - search_data:/var/lib/rabbitmq
   search:
     container_name: search
-    image: elasticsearch:2.4
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.1.1
     ports:
       - "9200:9200"
     healthcheck:
