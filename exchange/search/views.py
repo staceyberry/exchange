@@ -99,10 +99,11 @@ def get_facet_settings():
     # up open or closed by default
     default_facet_settings = {'open': False, 'show': True}
     facet_settings = {
-        'category': default_facet_settings,
+        'category': {'open': True, 'show': True},
         'source_host': {'open': False, 'display': 'Host'},
-        'owner__username': {'open': True, 'display': 'Owner'},
+        'owner__username': {'open': False, 'display': 'Owner'},
         'type': {'open': True, 'display': 'Type'},
+        'subtype': {'open': True, 'display': 'Data Type'},
         'keywords': {'show': True}
     }
 
@@ -150,8 +151,14 @@ def get_facet_fields():
     # search and facet with type
     additional_facets = getattr(settings, 'ADDITIONAL_FACETS', {})
 
-    facet_fields = ['type', 'subtype',
-                    'owner__username', 'keywords', 'category', 'source_host']
+    facet_fields = [
+        'type',
+        'subtype',
+        'owner__username',
+        'keywords',
+        'category',
+        'source_host'
+    ]
 
     if additional_facets:
         facet_fields.extend(additional_facets.keys())
@@ -167,11 +174,9 @@ def get_facet_filter(parameters):
         # add to the filters
         fp = parameters.getlist(fn)
         if not fp:
-            fp = parameters.getlist("%s__in" % (fn))
+            fp = parameters.getlist("{}__in".format(fn))
         if fp:
             fq = Q({'terms': {fn: fp}})
-            if fn == 'type':  # search across both type_exact and subtype
-                fq = fq | Q({'terms': {'subtype': fp}})
             facet_filters.append(fq)
 
     return facet_filters
@@ -201,8 +206,11 @@ def get_facet_results(aggregations, parameters):
             for bucket in buckets:
                 bucket_key = bucket.key
                 bucket_count = bucket.doc_count
-                bucket_dict = {'global_count': bucket_count,
-                               'count': 0, 'display': bucket.key}
+                bucket_dict = {
+                    'global_count': bucket_count,
+                    'count': 0,
+                    'display': bucket.key
+                }
                 if lookup:
                     if bucket_key in lookup:
                         bucket_dict.update(lookup[bucket_key])
@@ -213,7 +221,20 @@ def get_facet_results(aggregations, parameters):
 
 def get_main_query(search, query):
     # Set base fields to search
-    fields = ['title', 'abstract', 'title_alternate']
+    fields = [
+        'title',
+        'abstract',
+        'title_alternate',
+        'category',
+        'owner__username',
+        'category__gn_description',
+        'owner__first_name',
+        'owner__last_name',
+        'typename',
+        'type',
+        'subtype',
+        'supplemental_information'
+    ]
 
     # Build main query to search in fields[]
     # Filter by Query Params
@@ -222,31 +243,51 @@ def get_main_query(search, query):
             # Match exact phrase
             phrase = query.replace('"', '')
             search = search.query(
-                "multi_match", type='phrase_prefix',
-                query=phrase, fields=fields)
+                "multi_match",
+                type='phrase_prefix',
+                query=phrase,
+                fields=fields
+            )
         else:
+            word_query = None
             words = [
                 w for w in re.split(
                     '\W',
                     query,
-                    flags=re.UNICODE) if w]
+                    flags=re.UNICODE
+                ) if w
+            ]
+
             for i, search_word in enumerate(words):
+                if search_word in ['layers', 'documents', 'maps']:
+                    search_word = search_word[:-1]
+
                 if i == 0:
                     word_query = Q(
-                        "multi_match", type='phrase_prefix',
-                        query=search_word, fields=fields)
+                        "multi_match",
+                        type='phrase_prefix',
+                        query=search_word,
+                        fields=fields
+                    )
                 elif search_word.upper() in ["AND", "OR"]:
                     pass
                 elif words[i - 1].upper() == "OR":
                     word_query = word_query | Q(
-                        "multi_match", type='phrase_prefix',
-                        query=search_word, fields=fields)
+                        "multi_match",
+                        type='phrase_prefix',
+                        query=search_word,
+                        fields=fields
+                    )
                 else:  # previous word AND this word
                     word_query = word_query & Q(
-                        "multi_match", type='phrase_prefix',
-                        query=search_word, fields=fields)
-            # logger.debug('******* WORD_QUERY %s', word_query.to_dict())
-            search = search.query(word_query)
+                        "multi_match",
+                        type='phrase_prefix',
+                        query=search_word,
+                        fields=fields
+                    )
+
+            if word_query is not None:
+                search = search.query(word_query)
 
     return search
 
@@ -364,12 +405,6 @@ def filter_results_by_facets(aggregations, facet_results):
                 except Exception as e:
                     facet_results['errors'] = "key: {}, bucket_key: {} \
                         , error: {}".format(k, bkey, e)
-
-    # combine buckets for type and subtype and get rid of subtype bucket
-    if 'subtype' in facet_results:
-        facet_results['type']['facets'].update(
-            facet_results['subtype']['facets'])
-        del facet_results['subtype']
 
     # Remove Empty Facets
     for item in facet_results.keys():
