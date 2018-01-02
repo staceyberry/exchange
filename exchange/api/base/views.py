@@ -21,7 +21,11 @@
 from . import serializers
 from geonode.layers.models import Layer
 from geonode.base.models import TopicCategory
-from rest_framework import viewsets
+from rest_framework import viewsets, views, authentication, permissions
+from rest_framework.response import Response
+from exchange.views import get_exchange_version, get_geoserver_version, get_pip_version
+from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
 
 
 class LayerViewSet(viewsets.ModelViewSet):
@@ -32,3 +36,74 @@ class LayerViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = TopicCategory.objects.all()
     serializer_class = serializers.CategorySerializer
+
+class CapabilitiesViewSet(viewsets.ViewSet):
+
+    """
+    The capabilities view is like the about page, but for consumption by code instead of humans.
+    It serves to provide information about the Exchange instance.
+    """
+
+    def list(self, request):
+
+        exchange_version = get_exchange_version()
+
+        geoserver_version = get_geoserver_version()
+        geonode_version = get_pip_version('GeoNode')
+        maploom_version = get_pip_version('django-exchange-maploom')
+        importer_version = get_pip_version('django-osgeo-importer')
+        react_version = get_pip_version('django-geonode-client')
+
+        projects = [{
+            'name': 'Boundless Exchange',
+            'website': 'https://boundlessgeo.com/boundless-exchange/',
+            'repo': 'https://github.com/boundlessgeo/exchange',
+            'version': exchange_version['version'],
+            'commit': exchange_version['commit']
+        }, {
+            'name': 'GeoNode',
+            'website': 'http://geonode.org/',
+            'repo': 'https://github.com/GeoNode/geonode',
+            'boundless_repo': 'https://github.com/boundlessgeo/geonode',
+            'version': geonode_version['version'],
+            'commit': geonode_version['commit']
+        }, {
+            'name': 'GeoServer',
+            'website': 'http://geoserver.org/',
+            'repo': 'https://github.com/geoserver/geoserver',
+            'boundless_repo': 'https://github.com/boundlessgeo/geoserver',
+            'version': geoserver_version['version'],
+            'commit': geoserver_version['commit']
+        }, {
+            'name': 'MapLoom',
+            'website': 'http://prominentedge.com/projects/maploom.html',
+            'repo': 'https://github.com/ROGUE-JCTD/MapLoom',
+            'boundless_repo': 'https://github.com/boundlessgeo/'
+                              + 'django-exchange-maploom',
+            'version': maploom_version['version'],
+            'commit': maploom_version['commit']
+        }, {
+            'name': 'OSGeo Importer',
+            'repo': 'https://github.com/GeoNode/django-osgeo-importer',
+            'version': importer_version['version'],
+            'commit': importer_version['commit']
+        }, {
+            'name': 'React Viewer',
+            'website': 'http://client.geonode.org',
+            'repo': 'https://github.com/GeoNode/geonode-client',
+            'version': react_version['version'],
+            'commit': react_version['commit']
+        }]
+
+        mobile_extension_installed = "geonode_anywhere" in settings.INSTALLED_APPS
+        mobile = (
+            mobile_extension_installed and
+            # check that the OAuth application has been created
+            len(Application.objects.filter(name='Anywhere')) > 0
+        )
+
+        current_site = get_current_site(request)
+
+        capabilites = { 'site_name': current_site.name, 'versions': projects, 'mobile': mobile}
+
+        return Response(capabilites)
