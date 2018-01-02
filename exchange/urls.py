@@ -27,9 +27,7 @@ from fileservice.urls import urlpatterns as fileservice_urls
 from thumbnails.urls import urlpatterns as thumbnail_urls
 from geonode.urls import urlpatterns as geonode_urls
 from . import views
-
-from .api.base.router import api_urlpatterns as api_v1
-from .api.versioned.v2.router import api_urlpatterns as api_v2
+from storyscapes.urls import urlpatterns as story_urls
 
 js_info_dict = {
     'packages': ('geonode.layers',),
@@ -50,11 +48,11 @@ urlpatterns = patterns(
     url(r'^help/$', views.documentation_page, name='help'),
     url(r'^developer/$', views.documentation_page, name='developer'),
 
-    url(r'^services/(?P<pk>\d+)/publish$', views.publish_service, name='publish_service'),
+    url(r'^services/(?P<pk>\d+)/publish$',
+        views.publish_service, name='publish_service'),
 
     url(r'^about/', views.about_page, name='about'),
-    url(r'^api/v1/', include(api_v1, namespace='api-v1')),
-    url(r'^api/v2/', include(api_v2, namespace='api-v2')),
+    url(r'^capabilities/', views.capabilities, name='capabilities'),
 )
 
 if settings.ENABLE_SOCIAL_LOGIN is True:
@@ -77,30 +75,39 @@ if 'osgeo_importer' in settings.INSTALLED_APPS:
     from osgeo_importer.urls import urlpatterns as osgeo_importer_urls
     urlpatterns += osgeo_importer_urls
 
+if settings.STORYSCAPES_ENABLED:
+    urlpatterns += story_urls
+
 if 'nearsight' in settings.INSTALLED_APPS:
     from nearsight.urls import urlpatterns as nearsight_urls
     urlpatterns += nearsight_urls
 
 # use combined registry/geonode elastic search rather than geonode search
-if settings.ES_UNIFIED_SEARCH:
+if settings.ES_SEARCH:
     urlpatterns += [url(r'^api/(?P<resourcetype>base)/search/$',
-                        views.unified_elastic_search,
-                        name='unified_elastic_search')]
+                        views.elastic_search,
+                        name='elastic_search')]
     urlpatterns += [url(r'^api/(?P<resourcetype>documents)/search/$',
-                        views.unified_elastic_search,
-                        name='unified_elastic_search')]
+                        views.elastic_search,
+                        name='elastic_search')]
     urlpatterns += [url(r'^api/(?P<resourcetype>layers)/search/$',
-                        views.unified_elastic_search,
-                        name='unified_elastic_search')]
+                        views.elastic_search,
+                        name='elastic_search')]
     urlpatterns += [url(r'^api/(?P<resourcetype>maps)/search/$',
-                        views.unified_elastic_search,
-                        name='unified_elastic_search')]
+                        views.elastic_search,
+                        name='elastic_search')]
     urlpatterns += [url(r'^api/(?P<resourcetype>registry)/search/$',
-                        views.unified_elastic_search,
-                        name='unified_elastic_search')]
-    urlpatterns += [url(r'^autocomplete', 
-                        views.empty_page, 
+                        views.elastic_search,
+                        name='elastic_search')]
+    urlpatterns += [url(r'^autocomplete',
+                        views.empty_page,
                         name='autocomplete_override')]
+
+if 'geonode_anywhere' in settings.INSTALLED_APPS:
+    urlpatterns += [url(r"^anywhere/", include("geonode_anywhere.urls")), ]
+
+if 'worm' in settings.INSTALLED_APPS:
+    urlpatterns += [url(r"^services/", include("worm.urls")), ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 urlpatterns += geonode_urls
