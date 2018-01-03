@@ -44,7 +44,7 @@ class ThemeTestCase(ExchangeTest):
             pb_text="Test Powered By Text",
             pb_link="http://boundlessgeo.com/",
             docs_text="Documentation",
-            docs_link="/static/docs/index.html",
+            docs_link="/static/docs/html/index.html",
             background_logo="theme/img/default-background.png",
             primary_logo="theme/img/default-primary-logo.png",
             banner_logo="theme/img/default-banner-logo.png"
@@ -63,7 +63,8 @@ class ThemeTestCase(ExchangeTest):
             pb_text="Test Powered By Text",
             pb_link="http://boundlessgeo.com/",
             docs_text="Documentation",
-            docs_link="https://boundlessgeo.github.io/exchange-documentation/",
+            docs_link="https://boundlessgeo.github.io/"
+                      "exchange-documentation/",
             background_logo=None,
             primary_logo=None,
             banner_logo=None
@@ -153,8 +154,7 @@ class ThemeViewTest(ExchangeTest):
 
         self.assertEqual(r.status_code, 200,
                          'Did not get admin theme list (status: %d)' % (
-                           r.status_code
-                         ))
+                             r.status_code))
 
         r = self.client.get('/admin/themes/theme/add/')
 
