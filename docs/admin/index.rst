@@ -682,3 +682,5 @@ If a story is no longer needed, it can be quickly removed through the Django adm
   .. figure:: img/delete-story.png
 
 3. Verify your selection by clicking the :guilabel:`Yes, I’m sure button`. The story will be removed from Exchange.
+
+4. Test
