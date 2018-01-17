@@ -1,4 +1,4 @@
-Discovering available content
+Discovering Exchange content
 =============================
 
 There are many different ways to find, filter and display data throughout Exchange. Whether you know what you’re looking for, or you need to do a little digging, Exchange helps you find exactly what you need.
