@@ -1,10 +1,7 @@
-import re
 import requests
 import logging
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.db.models.signals import pre_delete, post_save
-from django.dispatch import receiver
 from django.shortcuts import render, render_to_response, redirect
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
@@ -17,7 +14,6 @@ from guardian.shortcuts import assign_perm
 from pip._vendor import pkg_resources
 from exchange.tasks import create_record, delete_record
 from django.core.urlresolvers import reverse
-from geonode.services.models import Service
 from oauth2_provider.models import Application
 from django.contrib.sites.shortcuts import get_current_site
 
@@ -168,7 +164,7 @@ def capabilities(request):
     capabilities["mobile"] = (
         mobile_extension_installed and
         # check that the OAuth application has been created
-        len(Application.objects.filter(name='Anywhere')) > 0
+        len(Application.objects.filter(client_id='anywhere')) > 0
     )
 
     current_site = get_current_site(request)
@@ -255,8 +251,6 @@ def publish_service(request, pk):
     return redirect('services')
 
 
-@receiver(pre_delete, sender=Service,
-          dispatch_uid='remove_record_from_registry')
 def remove_record_from_csw(sender, instance, using, **kwargs):
     """
     Delete all csw records associated with the service. We only
@@ -269,7 +263,6 @@ def remove_record_from_csw(sender, instance, using, **kwargs):
         delete_record(instance.uuid)
 
 
-@receiver(post_save, sender=Service)
 def service_post_save(sender, **kwargs):
     """
     Assign CSW Manager permissions for all newly created Service instances.

@@ -13,7 +13,6 @@ There are two available style formats in Exchange, which can help you visualize 
 
 You will first need to ensure your map is opened with the appropriate layer(s) added and visible.
 
-
 Simple
 ^^^^^^
 
